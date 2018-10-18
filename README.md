@@ -1,0 +1,1 @@
+provides a http-api for advanced requests over multiple other api of the sepl-platform

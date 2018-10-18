@@ -1,0 +1,12 @@
+{
+  "ServerPort": "8080",
+  "LogLevel": "CALL",
+
+  "ForceUser": "true",
+  "ForceAuth": "true",
+
+  "PermissionsUrl": "http://permissionsearch:8080",
+  "IotUrl": "http://iot-repo:8080",
+  "ConnectionLogUrl": "http://connectionlog:8080"
+
+}
