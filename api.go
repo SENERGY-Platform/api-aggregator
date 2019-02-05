@@ -42,6 +42,53 @@ func getRoutes() (router *jwt_http_router.Router) {
 		ForceAuth: Config.ForceAuth == "true",
 	})
 
+	router.GET("/filter/devices/state/:value/name/asc", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+		value := ps.ByName("value")
+		result, err := GetConnectionFilteredDevicesOrder(jwt, value, true)
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		response.To(res).Json(result)
+	})
+
+	router.GET("/filter/devices/state/:value/name/desc", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+		value := ps.ByName("value")
+		result, err := GetConnectionFilteredDevicesOrder(jwt, value, false)
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		response.To(res).Json(result)
+	})
+
+	router.GET("/filter/devices/state/:value/search/:searchtext/name/asc", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+		value := ps.ByName("value")
+		searchText := ps.ByName("searchtext")
+		result, err := GetConnectionFilteredDevicesSearchOrder(jwt, value, searchText, true)
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		response.To(res).Json(result)
+	})
+
+	router.GET("/filter/devices/state/:value/search/:searchtext/name/desc", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+		value := ps.ByName("value")
+		searchText := ps.ByName("searchtext")
+		result, err := GetConnectionFilteredDevicesSearchOrder(jwt, value, searchText, false)
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		response.To(res).Json(result)
+	})
+
+
 	router.GET("/filter/devices/state/:value", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
 		value := ps.ByName("value")
 		result, err := GetConnectionFilteredDevices(jwt, value)
