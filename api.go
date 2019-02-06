@@ -205,6 +205,28 @@ func getRoutes() (router *jwt_http_router.Router) {
 		response.To(res).Json(result)
 	})
 
+	router.GET("/select/devices/tag/:value/:limit/:offset/:orderfeature/:direction/:state", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+		value := ps.ByName("value")
+		orderfeature := ps.ByName("orderfeature")
+		direction := ps.ByName("direction")
+		limit := ps.ByName("limit")
+		offset := ps.ByName("offset")
+		state := ps.ByName("state")
+		result, err := ListOrderdDevicesByTag(jwt, value, limit, offset, orderfeature, direction)
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		result, err = FilterDevicesByState(jwt, result, state)
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		response.To(res).Json(result)
+	})
+
 	router.GET("/select/devices/usertag/:value", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
 		value := ps.ByName("value")
 		result, err := ListDevicesByUserTag(jwt, value)
@@ -223,6 +245,28 @@ func getRoutes() (router *jwt_http_router.Router) {
 		limit := ps.ByName("limit")
 		offset := ps.ByName("offset")
 		result, err := ListOrderedDevicesByUserTag(jwt, value, limit, offset, orderfeature, direction)
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		response.To(res).Json(result)
+	})
+
+	router.GET("/select/devices/usertag/:value/:limit/:offset/:orderfeature/:direction/:state", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+		value := ps.ByName("value")
+		orderfeature := ps.ByName("orderfeature")
+		direction := ps.ByName("direction")
+		limit := ps.ByName("limit")
+		offset := ps.ByName("offset")
+		state := ps.ByName("state")
+		result, err := ListOrderedDevicesByUserTag(jwt, value, limit, offset, orderfeature, direction)
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		result, err = FilterDevicesByState(jwt, result, state)
 		if err != nil {
 			log.Println("ERROR: ", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)

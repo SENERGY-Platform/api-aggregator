@@ -83,21 +83,25 @@ func GetConnectionFilteredDevices(jwt jwt_http_router.Jwt, value string) (result
 		log.Println("ERROR GetConnectionFilteredDevices.PermListAllDevices()", err)
 		return result, err
 	}
+	return FilterDevicesByState(jwt, devices, value)
+}
+
+func FilterDevicesByState(jwt jwt_http_router.Jwt, devices []map[string]interface{}, state string)(result []map[string]interface{}, err error){
 	devicesWithOnlineState, err := completeDeviceList(jwt, devices)
 	if err != nil {
 		log.Println("ERROR GetConnectionFilteredDevices.completeDeviceList()", err)
-		return result, err
+		return devices, err
 	}
 
 	for _, device := range devicesWithOnlineState {
 		state, ok := device["log_state"]
-		if value == "connected" && ok && state.(bool) {
+		if state == "connected" && ok && state.(bool) {
 			result = append(result, device)
 		}
-		if value == "disconnected" && ok && !state.(bool) {
+		if state == "disconnected" && ok && !state.(bool) {
 			result = append(result, device)
 		}
-		if value == "unknown" && !ok {
+		if state == "unknown" && !ok {
 			result = append(result, device)
 		}
 	}
