@@ -32,7 +32,7 @@ func GetConnectionFilteredDevicesOrder(jwt jwt_http_router.Jwt, value string, so
 		return result, err
 	}
 
-	result = sortArray(result, sortAsc)
+	result = sortByName(result, sortAsc)
 
 	return
 }
@@ -47,12 +47,12 @@ func GetConnectionFilteredDevicesSearchOrder(jwt jwt_http_router.Jwt, value stri
 	}
 
 	result = filter(result, "name", searchText)
-	result = sortArray(result, sortAsc)
+	result = sortByName(result, sortAsc)
 
 	return
 }
 
-func sortArray(input []map[string]interface{}, sortAsc bool) (output []map[string]interface{})  {
+func sortByName(input []map[string]interface{}, sortAsc bool) (output []map[string]interface{})  {
 	output = input
 	if sortAsc == true {
 		sort.Slice(output, func(i, j int) bool {
