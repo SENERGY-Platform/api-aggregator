@@ -94,11 +94,11 @@ func FilterDevicesByState(jwt jwt_http_router.Jwt, devices []map[string]interfac
 	}
 
 	for _, device := range devicesWithOnlineState {
-		state, ok := device["log_state"]
-		if state == "connected" && ok && state.(bool) {
+		devicestate, ok := device["log_state"]
+		if state == "connected" && ok && devicestate.(bool) {
 			result = append(result, device)
 		}
-		if state == "disconnected" && ok && !state.(bool) {
+		if state == "disconnected" && ok && !devicestate.(bool) {
 			result = append(result, device)
 		}
 		if state == "unknown" && !ok {
