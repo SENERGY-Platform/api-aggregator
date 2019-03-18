@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package main
+package lib
 
 import (
 	"errors"
@@ -241,16 +241,6 @@ func GetDevicesHistory(jwt jwt_http_router.Jwt, duration string) (result []map[s
 	return
 }
 
-func GetGatewaysHistory(jwt jwt_http_router.Jwt, duration string) (result []map[string]interface{}, err error) {
-	result, err = PermListAllGateways(jwt, "r")
-	if err != nil {
-		log.Println("ERROR PermListAllGateways()", err)
-		return result, err
-	}
-	result, err = completeGatewayHistory(jwt, duration, result)
-	return
-}
-
 func completeDeviceHistory(jwt jwt_http_router.Jwt, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error) {
 	ids := []string{}
 	deviceMap := map[string]map[string]interface{}{}
@@ -302,121 +292,3 @@ func completeDeviceHistory(jwt jwt_http_router.Jwt, duration string, devices []m
 	return
 }
 
-func completeGatewayHistory(jwt jwt_http_router.Jwt, duration string, gateways []map[string]interface{}) (result []map[string]interface{}, err error) {
-	ids := []string{}
-	gatewayMap := map[string]map[string]interface{}{}
-	for _, gateway := range gateways {
-		id, ok := gateway["id"]
-		if !ok {
-			err = errors.New("unable to get gateway id")
-			return
-		}
-		idStr, ok := id.(string)
-		if !ok {
-			err = errors.New("unable to cast gateway id to string")
-			return
-		}
-		ids = append(ids, idStr)
-		gatewayMap[idStr] = gateway
-	}
-	logStates, err := GetGatewayLogStates(jwt, ids)
-	if err != nil {
-		log.Println("ERROR completeGatewayList.GetGatewayLogStates()", err)
-		return result, err
-	}
-	logHistory, err := GetGatewayLogHistory(jwt, ids, duration)
-	if err != nil {
-		log.Println("ERROR completeGatewayList.GetGatewayLogHistory()", err)
-		return result, err
-	}
-	logEdges, err := GetLogedges(jwt, "gateway", ids, duration)
-	if err != nil {
-		log.Println("ERROR completeDeviceList.GetLogedges()", err)
-		return result, err
-	}
-	for _, id := range ids {
-		gateway := gatewayMap[id]
-		logState, logExists := logStates[id]
-		if !logExists {
-			gateway["log_state"] = "unknown"
-		} else {
-			if logState {
-				gateway["log_state"] = "connected"
-			} else {
-				gateway["log_state"] = "disconnected"
-			}
-		}
-		gateway["log_history"] = logHistory[id]
-		gateway["log_edge"] = logEdges[id]
-		result = append(result, gateway)
-	}
-	return
-}
-
-func ListGateways(jwt jwt_http_router.Jwt, limit string, offset string) (result []map[string]interface{}, err error) {
-	gateways, err := PermListGateways(jwt, "r", limit, offset)
-	if err != nil {
-		log.Println("ERROR ListGateways.PermListGateways()", err)
-		return result, err
-	}
-	return completeGatewayList(jwt, gateways)
-}
-
-func ListGatewaysOrdered(jwt jwt_http_router.Jwt, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	gateways, err := PermListGatewaysOrdered(jwt, "r", limit, offset, orderfeature, direction)
-	if err != nil {
-		log.Println("ERROR ListGateways.PermListGateways()", err)
-		return result, err
-	}
-	return completeGatewayList(jwt, gateways)
-}
-
-func SearchGateways(jwt jwt_http_router.Jwt, query string, limit string, offset string) (result []map[string]interface{}, err error) {
-	gateways, err := PermSearchGateways(jwt, query, "r", limit, offset)
-	if err != nil {
-		return result, err
-	}
-	return completeGatewayList(jwt, gateways)
-}
-
-func SearchGatewaysOrdered(jwt jwt_http_router.Jwt, query string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	gateways, err := PermSearchGatewaysOrdered(jwt, query, "r", limit, offset, orderfeature, direction)
-	if err != nil {
-		return result, err
-	}
-	return completeGatewayList(jwt, gateways)
-}
-
-func completeGatewayList(jwt jwt_http_router.Jwt, gateways []map[string]interface{}) (result []map[string]interface{}, err error) {
-	ids := []string{}
-	gatewayMap := map[string]map[string]interface{}{}
-	for _, gateway := range gateways {
-		id, ok := gateway["id"]
-		if !ok {
-			err = errors.New("unable to get gateway id")
-			return
-		}
-		idStr, ok := id.(string)
-		if !ok {
-			err = errors.New("unable to cast gateway id to string")
-			return
-		}
-		ids = append(ids, idStr)
-		gatewayMap[idStr] = gateway
-	}
-	logStates, err := GetGatewayLogStates(jwt, ids)
-	if err != nil {
-		log.Println("ERROR completeGatewayList.GetGatewayLogStates()", err)
-		return result, err
-	}
-	for _, id := range ids {
-		gateway := gatewayMap[id]
-		logState, logExists := logStates[id]
-		if logExists {
-			gateway["log_state"] = logState
-		}
-		//gateway["gateway_name"] = gateways[id]
-		result = append(result, gateway)
-	}
-	return
-}

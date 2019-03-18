@@ -1,0 +1,131 @@
+package lib
+
+import (
+	"errors"
+	"github.com/SmartEnergyPlatform/jwt-http-router"
+	"log"
+	"net/url"
+	"strings"
+)
+
+func GetExtendedProcessList(jwt jwt_http_router.Jwt, query url.Values) (result []map[string]interface{}, err error) {
+	processes, err := GetProcessDeploymentList(jwt, query)
+	if err != nil {
+		return result, err
+	}
+	ids := []string{}
+	for _, process := range processes {
+		id, ok := process["id"].(string)
+		if !ok {
+			log.Println("ERROR: unable to read process id", process)
+			return result, errors.New("unable to read process id")
+		}
+		ids = append(ids, id)
+	}
+	metadata, err := GetProcessDependencyList(jwt, ids)
+	metadataIndex := map[string]Metadata{}
+	for _, m := range metadata {
+		metadataIndex[m.Process] = m
+	}
+	for _, process := range processes {
+		id, ok := process["id"].(string)
+		if !ok {
+			log.Println("ERROR: unable to read process id", process)
+			return result, errors.New("unable to read process id")
+		}
+		process["online"] = true
+		process["offline_reasons"] = []OfflineReason{}
+		if !metadataIndex[id].Online {
+			process["online"] = false
+			process["offline_reasons"], err = getOfflineReasons(metadataIndex[id])
+		}
+		result = append(result, process)
+	}
+	return
+}
+
+func GetProcessDeploymentList(jwt jwt_http_router.Jwt, query url.Values) (result []map[string]interface{}, err error) {
+	err = jwt.Impersonate.GetJSON(Config.CamundaWrapperUrl+"/deployment?"+query.Encode(), &result)
+	return
+}
+
+func GetProcessDependencyList(jwt jwt_http_router.Jwt, processIds []string) (result []Metadata, err error) {
+	err = jwt.Impersonate.GetJSON(Config.ProcessDeploymentUrl+"/dependencies?deployments="+strings.Join(processIds, ","), &result)
+	return
+}
+
+func getOfflineReasons(metadata Metadata) (result []OfflineReason, err error) {
+	for _, param := range metadata.Abstract.AbstractTasks {
+		if param.State != "unknown" && param.State != "connected" {
+			result = append(result, OfflineReason{
+				Type:           "device-offline",
+				Id:             param.Selected.Id,
+				AdditionalInfo: map[string]interface{}{"name": param.Selected.Name, "tasks": param.Tasks},
+				Description:    "device " + param.Selected.Name + " is " + param.State,
+			})
+		}
+	}
+	for _, event := range metadata.Abstract.MsgEvents {
+		if event.State != "running" {
+			result = append(result, OfflineReason{
+				Type:           "event-filter-offline",
+				Id:             event.FilterId,
+				AdditionalInfo: map[string]string{"shape_id": event.ShapeId},
+				Description:    "event-filter " + event.FilterId + " is " + event.State,
+			})
+		}
+	}
+	for _, event := range metadata.Abstract.ReceiveTasks {
+		if event.State != "running" {
+			result = append(result, OfflineReason{
+				Type:           "event-filter-offline",
+				Id:             event.FilterId,
+				AdditionalInfo: map[string]string{"shape_id": event.ShapeId},
+				Description:    "event-filter " + event.FilterId + " for shape " + event.ShapeId + " is " + event.State,
+			})
+		}
+	}
+	return
+}
+
+type OfflineReason struct {
+	Type           string      `json:"type"`
+	Id             string      `json:"id"`
+	AdditionalInfo interface{} `json:"additional_info,omitempty"`
+	Description    string      `json:"description"`
+}
+
+type Metadata struct {
+	Process  string          `json:"process"`
+	Abstract AbstractProcess `json:"abstract"`
+	Online   bool            `json:"online"`
+	Owner    string          `json:"owner"`
+}
+
+type AbstractProcess struct {
+	AbstractTasks []AbstractTask `json:"abstract_tasks"`
+	ReceiveTasks  []MsgEvent     `json:"receive_tasks"`
+	MsgEvents     []MsgEvent     `json:"msg_events"`
+}
+
+type AbstractTask struct {
+	Selected DeviceInstance `json:"selected"`
+	State    string         `json:"state" bson:"-"`
+	Tasks    []Task         `json:"tasks"`
+}
+
+type Task struct {
+	Id    string `json:"id"`
+	Label string `json:"label"`
+}
+
+type MsgEvent struct {
+	FilterId string `json:"filter_id,omitempty"`
+	ShapeId  string `json:"shape_id"`
+	State    string `json:"state,omitempty" bson:"-"`
+}
+
+type DeviceInstance struct {
+	Id   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}

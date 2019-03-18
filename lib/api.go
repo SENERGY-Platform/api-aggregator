@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package main
+package lib
 
 import (
 	"github.com/SmartEnergyPlatform/jwt-http-router"
@@ -164,7 +164,6 @@ func getRoutes() (router *jwt_http_router.Router) {
 		response.To(res).Json(result)
 	})
 
-
 	router.GET("/filter/devices/state/:value", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
 		value := ps.ByName("value")
 		result, err := GetConnectionFilteredDevices(jwt, value)
@@ -281,7 +280,6 @@ func getRoutes() (router *jwt_http_router.Router) {
 		response.To(res).Json(result)
 	})
 
-
 	router.GET("/select/devices/usertag/:value", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
 		value := ps.ByName("value")
 		result, err := ListDevicesByUserTag(jwt, value)
@@ -307,7 +305,6 @@ func getRoutes() (router *jwt_http_router.Router) {
 		}
 		response.To(res).Json(result)
 	})
-
 
 	router.POST("/select/devices/ids", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
 		ids := []string{}
@@ -440,6 +437,18 @@ func getRoutes() (router *jwt_http_router.Router) {
 		query := ps.ByName("query")
 		orderfeature := ps.ByName("orderfeature")
 		result, err := SearchGatewaysOrdered(jwt, query, limit, offset, orderfeature, "desc")
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		response.To(res).Json(result)
+	})
+
+	//reads query parameter like https://docs.camunda.org/manual/7.5/reference/rest/deployment/get-query/
+	router.GET("/processes", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+		log.Println("DEBUG: ", r.URL.Query())
+		result, err := GetExtendedProcessList(jwt, r.URL.Query())
 		if err != nil {
 			log.Println("ERROR: ", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)

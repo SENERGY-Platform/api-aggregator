@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package main
+package lib
 
 import (
 	"encoding/json"
@@ -34,6 +34,9 @@ type ConfigStruct struct {
 	IotUrl           string
 	ConnectionLogUrl string
 	PermissionsUrl   string
+
+	CamundaWrapperUrl    string
+	ProcessDeploymentUrl string
 
 	ForceUser string
 	ForceAuth string
