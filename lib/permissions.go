@@ -24,58 +24,58 @@ import (
 	"net/url"
 )
 
-func PermListGateways(jwt jwt_http_router.Jwt, right string, limit string, offset string) (result []map[string]interface{}, err error) {
-	return PermList(jwt, "gateway", right, limit, offset)
+func (this *Lib) PermListGateways(jwt jwt_http_router.Jwt, right string, limit string, offset string) (result []map[string]interface{}, err error) {
+	return this.PermList(jwt, "gateway", right, limit, offset)
 }
 
-func PermListGatewaysOrdered(jwt jwt_http_router.Jwt, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return PermListOrdered(jwt, "gateway", right, limit, offset, orderfeature, direction)
+func (this *Lib) PermListGatewaysOrdered(jwt jwt_http_router.Jwt, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
+	return this.PermListOrdered(jwt, "gateway", right, limit, offset, orderfeature, direction)
 }
 
-func PermSearchGateways(jwt jwt_http_router.Jwt, query string, right string, limit string, offset string) (result []map[string]interface{}, err error) {
-	return PermSearch(jwt, "gateway", query, right, limit, offset)
+func (this *Lib) PermSearchGateways(jwt jwt_http_router.Jwt, query string, right string, limit string, offset string) (result []map[string]interface{}, err error) {
+	return this.PermSearch(jwt, "gateway", query, right, limit, offset)
 }
 
-func PermSearchGatewaysOrdered(jwt jwt_http_router.Jwt, query string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return PermSearchOrdered(jwt, "gateway", query, right, limit, offset, orderfeature, direction)
+func (this *Lib) PermSearchGatewaysOrdered(jwt jwt_http_router.Jwt, query string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
+	return this.PermSearchOrdered(jwt, "gateway", query, right, limit, offset, orderfeature, direction)
 }
 
-func PermDeviceIdList(jwt jwt_http_router.Jwt, ids []string, right string) (result []map[string]interface{}, err error) {
-	return PermIdList(jwt, "deviceinstance", ids, right)
+func (this *Lib) PermDeviceIdList(jwt jwt_http_router.Jwt, ids []string, right string) (result []map[string]interface{}, err error) {
+	return this.PermIdList(jwt, "deviceinstance", ids, right)
 }
 
-func PermDeviceIdListOrdered(jwt jwt_http_router.Jwt, ids []string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return PermIdListOrdered(jwt, "deviceinstance", ids, right, limit, offset, orderfeature, direction)
+func (this *Lib) PermDeviceIdListOrdered(jwt jwt_http_router.Jwt, ids []string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
+	return this.PermIdListOrdered(jwt, "deviceinstance", ids, right, limit, offset, orderfeature, direction)
 }
 
-func PermIdList(jwt jwt_http_router.Jwt, kind string, ids []string, right string) (result []map[string]interface{}, err error) {
-	err = jwt.Impersonate.PostJSON(Config.PermissionsUrl+"/ids/select/"+url.PathEscape( kind)+"/"+right, ids, &result)
+func (this *Lib) PermIdList(jwt jwt_http_router.Jwt, kind string, ids []string, right string) (result []map[string]interface{}, err error) {
+	err = jwt.Impersonate.PostJSON(this.config.PermissionsUrl+"/ids/select/"+url.PathEscape(kind)+"/"+right, ids, &result)
 	return
 }
 
-func PermIdListOrdered(jwt jwt_http_router.Jwt, kind string, ids []string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	err = jwt.Impersonate.PostJSON(Config.PermissionsUrl+"/ids/select/"+url.PathEscape( kind)+"/"+right+"/"+limit+"/"+offset+"/"+url.PathEscape( orderfeature)+"/"+direction, ids, &result)
+func (this *Lib) PermIdListOrdered(jwt jwt_http_router.Jwt, kind string, ids []string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
+	err = jwt.Impersonate.PostJSON(this.config.PermissionsUrl+"/ids/select/"+url.PathEscape(kind)+"/"+right+"/"+limit+"/"+offset+"/"+url.PathEscape(orderfeature)+"/"+direction, ids, &result)
 	return
 }
 
-func PermListDevices(jwt jwt_http_router.Jwt, right string, limit string, offset string) (result []map[string]interface{}, err error) {
-	return PermList(jwt, "deviceinstance", right, limit, offset)
+func (this *Lib) PermListDevices(jwt jwt_http_router.Jwt, right string, limit string, offset string) (result []map[string]interface{}, err error) {
+	return this.PermList(jwt, "deviceinstance", right, limit, offset)
 }
 
-func PermListDevicesOrdered(jwt jwt_http_router.Jwt, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return PermListOrdered(jwt, "deviceinstance", right, limit, offset, orderfeature, direction)
+func (this *Lib) PermListDevicesOrdered(jwt jwt_http_router.Jwt, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
+	return this.PermListOrdered(jwt, "deviceinstance", right, limit, offset, orderfeature, direction)
 }
 
-func PermListAllDevices(jwt jwt_http_router.Jwt, right string) (result []map[string]interface{}, err error) {
-	return PermListAll(jwt, "deviceinstance", right)
+func (this *Lib) PermListAllDevices(jwt jwt_http_router.Jwt, right string) (result []map[string]interface{}, err error) {
+	return this.PermListAll(jwt, "deviceinstance", right)
 }
 
-func PermListAllGateways(jwt jwt_http_router.Jwt, right string) (result []map[string]interface{}, err error) {
-	return PermListAll(jwt, "gateway", right)
+func (this *Lib) PermListAllGateways(jwt jwt_http_router.Jwt, right string) (result []map[string]interface{}, err error) {
+	return this.PermListAll(jwt, "gateway", right)
 }
 
-func PermListAll(jwt jwt_http_router.Jwt, kind string, right string) (result []map[string]interface{}, err error) {
-	resp, err := jwt.Impersonate.Get(Config.PermissionsUrl + "/jwt/list/" + url.PathEscape( kind) + "/" + right)
+func (this *Lib) PermListAll(jwt jwt_http_router.Jwt, kind string, right string) (result []map[string]interface{}, err error) {
+	resp, err := jwt.Impersonate.Get(this.config.PermissionsUrl + "/jwt/list/" + url.PathEscape(kind) + "/" + right)
 	if err != nil {
 		return result, err
 	}
@@ -87,9 +87,9 @@ func PermListAll(jwt jwt_http_router.Jwt, kind string, right string) (result []m
 	return
 }
 
-func PermList(jwt jwt_http_router.Jwt, kind string, right string, limit string, offset string) (result []map[string]interface{}, err error) {
+func (this *Lib) PermList(jwt jwt_http_router.Jwt, kind string, right string, limit string, offset string) (result []map[string]interface{}, err error) {
 	//"/jwt/list/:resource_kind/:right"
-	resp, err := jwt.Impersonate.Get(Config.PermissionsUrl + "/jwt/list/" + url.PathEscape( kind) + "/" + right + "/" + limit + "/" + offset)
+	resp, err := jwt.Impersonate.Get(this.config.PermissionsUrl + "/jwt/list/" + url.PathEscape(kind) + "/" + right + "/" + limit + "/" + offset)
 	if err != nil {
 		return result, err
 	}
@@ -101,8 +101,8 @@ func PermList(jwt jwt_http_router.Jwt, kind string, right string, limit string, 
 	return
 }
 
-func PermListOrdered(jwt jwt_http_router.Jwt, kind string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	resp, err := jwt.Impersonate.Get(Config.PermissionsUrl + "/jwt/list/" + url.PathEscape( kind) + "/" + right + "/" + limit + "/" + offset + "/" + url.PathEscape( orderfeature) + "/" + direction)
+func (this *Lib) PermListOrdered(jwt jwt_http_router.Jwt, kind string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
+	resp, err := jwt.Impersonate.Get(this.config.PermissionsUrl + "/jwt/list/" + url.PathEscape(kind) + "/" + right + "/" + limit + "/" + offset + "/" + url.PathEscape(orderfeature) + "/" + direction)
 	if err != nil {
 		return result, err
 	}
@@ -114,17 +114,17 @@ func PermListOrdered(jwt jwt_http_router.Jwt, kind string, right string, limit s
 	return
 }
 
-func PermSearchDevices(jwt jwt_http_router.Jwt, query string, right string, limit string, offset string) (result []map[string]interface{}, err error) {
-	return PermSearch(jwt, "deviceinstance", query, right, limit, offset)
+func (this *Lib) PermSearchDevices(jwt jwt_http_router.Jwt, query string, right string, limit string, offset string) (result []map[string]interface{}, err error) {
+	return this.PermSearch(jwt, "deviceinstance", query, right, limit, offset)
 }
 
-func PermSearchDevicesOrdered(jwt jwt_http_router.Jwt, query string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return PermSearchOrdered(jwt, "deviceinstance", query, right, limit, offset, orderfeature, direction)
+func (this *Lib) PermSearchDevicesOrdered(jwt jwt_http_router.Jwt, query string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
+	return this.PermSearchOrdered(jwt, "deviceinstance", query, right, limit, offset, orderfeature, direction)
 }
 
-func PermSearch(jwt jwt_http_router.Jwt, kind string, query string, right string, limit string, offset string) (result []map[string]interface{}, err error) {
+func (this *Lib) PermSearch(jwt jwt_http_router.Jwt, kind string, query string, right string, limit string, offset string) (result []map[string]interface{}, err error) {
 	//"/jwt/search/:resource_kind/:query/:right/:limit/:offset"
-	resp, err := jwt.Impersonate.Get(Config.PermissionsUrl + "/jwt/search/" + url.PathEscape( kind) + "/" + url.PathEscape( query) + "/" + right + "/" + limit + "/" + offset)
+	resp, err := jwt.Impersonate.Get(this.config.PermissionsUrl + "/jwt/search/" + url.PathEscape(kind) + "/" + url.PathEscape(query) + "/" + right + "/" + limit + "/" + offset)
 	if err != nil {
 		return result, err
 	}
@@ -136,8 +136,8 @@ func PermSearch(jwt jwt_http_router.Jwt, kind string, query string, right string
 	return
 }
 
-func PermSearchOrdered(jwt jwt_http_router.Jwt, kind string, query string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	resp, err := jwt.Impersonate.Get(Config.PermissionsUrl + "/jwt/search/" + url.PathEscape( kind) + "/" + url.PathEscape( query) + "/" + right + "/" + limit + "/" + offset + "/" + url.PathEscape( orderfeature) + "/" + direction)
+func (this *Lib) PermSearchOrdered(jwt jwt_http_router.Jwt, kind string, query string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
+	resp, err := jwt.Impersonate.Get(this.config.PermissionsUrl + "/jwt/search/" + url.PathEscape(kind) + "/" + url.PathEscape(query) + "/" + right + "/" + limit + "/" + offset + "/" + url.PathEscape(orderfeature) + "/" + direction)
 	if err != nil {
 		return result, err
 	}
@@ -149,24 +149,24 @@ func PermSearchOrdered(jwt jwt_http_router.Jwt, kind string, query string, right
 	return
 }
 
-func PermSelectUserTagDevices(jwt jwt_http_router.Jwt, value string, right string) (result []map[string]interface{}, err error) {
-	return PermSelect(jwt, "deviceinstance", "usertag", value, right)
+func (this *Lib) PermSelectUserTagDevices(jwt jwt_http_router.Jwt, value string, right string) (result []map[string]interface{}, err error) {
+	return this.PermSelect(jwt, "deviceinstance", "usertag", value, right)
 }
 
-func PermSelectUserTagDevicesOrdered(jwt jwt_http_router.Jwt, value string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return PermSelectOrdered(jwt, "deviceinstance", "usertag", value, right, limit, offset, orderfeature, direction)
+func (this *Lib) PermSelectUserTagDevicesOrdered(jwt jwt_http_router.Jwt, value string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
+	return this.PermSelectOrdered(jwt, "deviceinstance", "usertag", value, right, limit, offset, orderfeature, direction)
 }
 
-func PermSelectTagDevices(jwt jwt_http_router.Jwt, value string, right string) (result []map[string]interface{}, err error) {
-	return PermSelect(jwt, "deviceinstance", "tag", value, right)
+func (this *Lib) PermSelectTagDevices(jwt jwt_http_router.Jwt, value string, right string) (result []map[string]interface{}, err error) {
+	return this.PermSelect(jwt, "deviceinstance", "tag", value, right)
 }
 
-func PermSelectTagDevicesOrdered(jwt jwt_http_router.Jwt, value string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return PermSelectOrdered(jwt, "deviceinstance", "tag", value, right, limit, offset, orderfeature, direction)
+func (this *Lib) PermSelectTagDevicesOrdered(jwt jwt_http_router.Jwt, value string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
+	return this.PermSelectOrdered(jwt, "deviceinstance", "tag", value, right, limit, offset, orderfeature, direction)
 }
 
-func PermSelect(jwt jwt_http_router.Jwt, kind string, field string, value string, right string) (result []map[string]interface{}, err error) {
-	resp, err := jwt.Impersonate.Get(Config.PermissionsUrl + "/jwt/select/" + url.PathEscape( kind) + "/" + url.PathEscape( field) + "/" + url.PathEscape(value)   + "/" + right)
+func (this *Lib) PermSelect(jwt jwt_http_router.Jwt, kind string, field string, value string, right string) (result []map[string]interface{}, err error) {
+	resp, err := jwt.Impersonate.Get(this.config.PermissionsUrl + "/jwt/select/" + url.PathEscape(kind) + "/" + url.PathEscape(field) + "/" + url.PathEscape(value) + "/" + right)
 	if err != nil {
 		return result, err
 	}
@@ -178,8 +178,8 @@ func PermSelect(jwt jwt_http_router.Jwt, kind string, field string, value string
 	return
 }
 
-func PermSelectOrdered(jwt jwt_http_router.Jwt, kind string, field string, value string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	resp, err := jwt.Impersonate.Get(Config.PermissionsUrl + "/jwt/select/" + url.PathEscape( kind) + "/" + url.PathEscape( field) + "/" + url.PathEscape(value) + "/" + right + "/" + limit + "/" + offset + "/" + url.PathEscape( orderfeature) + "/" + direction)
+func (this *Lib) PermSelectOrdered(jwt jwt_http_router.Jwt, kind string, field string, value string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
+	resp, err := jwt.Impersonate.Get(this.config.PermissionsUrl + "/jwt/select/" + url.PathEscape(kind) + "/" + url.PathEscape(field) + "/" + url.PathEscape(value) + "/" + right + "/" + limit + "/" + offset + "/" + url.PathEscape(orderfeature) + "/" + direction)
 	if err != nil {
 		return result, err
 	}
@@ -191,16 +191,16 @@ func PermSelectOrdered(jwt jwt_http_router.Jwt, kind string, field string, value
 	return
 }
 
-func PermCheckDeviceAdmin(jwt jwt_http_router.Jwt, ids []string) (result map[string]bool, err error) {
-	return PermCheck(jwt, "deviceinstance", ids, "a")
+func (this *Lib) PermCheckDeviceAdmin(jwt jwt_http_router.Jwt, ids []string) (result map[string]bool, err error) {
+	return this.PermCheck(jwt, "deviceinstance", ids, "a")
 }
 
-func PermCheckDeviceRead(jwt jwt_http_router.Jwt, ids []string) (result map[string]bool, err error) {
-	return PermCheck(jwt, "deviceinstance", ids, "r")
+func (this *Lib) PermCheckDeviceRead(jwt jwt_http_router.Jwt, ids []string) (result map[string]bool, err error) {
+	return this.PermCheck(jwt, "deviceinstance", ids, "r")
 }
 
-func PermCheck(jwt jwt_http_router.Jwt, kind string, ids []string, right string) (result map[string]bool, err error) {
+func (this *Lib) PermCheck(jwt jwt_http_router.Jwt, kind string, ids []string, right string) (result map[string]bool, err error) {
 	result = map[string]bool{}
-	err = jwt.Impersonate.PostJSON(Config.PermissionsUrl+"/ids/check/"+url.PathEscape( kind)+"/"+right, ids, &result)
+	err = jwt.Impersonate.PostJSON(this.config.PermissionsUrl+"/ids/check/"+url.PathEscape(kind)+"/"+right, ids, &result)
 	return
 }

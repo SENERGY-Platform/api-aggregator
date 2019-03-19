@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/SmartEnergyPlatform/api-aggregator/api"
 	"github.com/SmartEnergyPlatform/api-aggregator/lib"
 	"log"
 )
@@ -28,10 +29,10 @@ func main() {
 	configLocation := flag.String("config", "config.json", "configuration file")
 	flag.Parse()
 
-	err := lib.LoadConfig(*configLocation)
+	config, err := lib.LoadConfig(*configLocation)
 	if err != nil {
 		log.Fatal("unable to load config", err)
 	} else {
-		lib.StartApi()
+		api.Start(lib.New(config))
 	}
 }

@@ -22,19 +22,17 @@ import (
 	"log"
 )
 
-
-
-func GetGatewaysHistory(jwt jwt_http_router.Jwt, duration string) (result []map[string]interface{}, err error) {
-	result, err = PermListAllGateways(jwt, "r")
+func (this *Lib) GetGatewaysHistory(jwt jwt_http_router.Jwt, duration string) (result []map[string]interface{}, err error) {
+	result, err = this.PermListAllGateways(jwt, "r")
 	if err != nil {
 		log.Println("ERROR PermListAllGateways()", err)
 		return result, err
 	}
-	result, err = completeGatewayHistory(jwt, duration, result)
+	result, err = this.completeGatewayHistory(jwt, duration, result)
 	return
 }
 
-func completeGatewayHistory(jwt jwt_http_router.Jwt, duration string, gateways []map[string]interface{}) (result []map[string]interface{}, err error) {
+func (this *Lib) completeGatewayHistory(jwt jwt_http_router.Jwt, duration string, gateways []map[string]interface{}) (result []map[string]interface{}, err error) {
 	ids := []string{}
 	gatewayMap := map[string]map[string]interface{}{}
 	for _, gateway := range gateways {
@@ -51,17 +49,17 @@ func completeGatewayHistory(jwt jwt_http_router.Jwt, duration string, gateways [
 		ids = append(ids, idStr)
 		gatewayMap[idStr] = gateway
 	}
-	logStates, err := GetGatewayLogStates(jwt, ids)
+	logStates, err := this.GetGatewayLogStates(jwt, ids)
 	if err != nil {
 		log.Println("ERROR completeGatewayList.GetGatewayLogStates()", err)
 		return result, err
 	}
-	logHistory, err := GetGatewayLogHistory(jwt, ids, duration)
+	logHistory, err := this.GetGatewayLogHistory(jwt, ids, duration)
 	if err != nil {
 		log.Println("ERROR completeGatewayList.GetGatewayLogHistory()", err)
 		return result, err
 	}
-	logEdges, err := GetLogedges(jwt, "gateway", ids, duration)
+	logEdges, err := this.GetLogedges(jwt, "gateway", ids, duration)
 	if err != nil {
 		log.Println("ERROR completeDeviceList.GetLogedges()", err)
 		return result, err
@@ -85,41 +83,41 @@ func completeGatewayHistory(jwt jwt_http_router.Jwt, duration string, gateways [
 	return
 }
 
-func ListGateways(jwt jwt_http_router.Jwt, limit string, offset string) (result []map[string]interface{}, err error) {
-	gateways, err := PermListGateways(jwt, "r", limit, offset)
+func (this *Lib) ListGateways(jwt jwt_http_router.Jwt, limit string, offset string) (result []map[string]interface{}, err error) {
+	gateways, err := this.PermListGateways(jwt, "r", limit, offset)
 	if err != nil {
 		log.Println("ERROR ListGateways.PermListGateways()", err)
 		return result, err
 	}
-	return completeGatewayList(jwt, gateways)
+	return this.completeGatewayList(jwt, gateways)
 }
 
-func ListGatewaysOrdered(jwt jwt_http_router.Jwt, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	gateways, err := PermListGatewaysOrdered(jwt, "r", limit, offset, orderfeature, direction)
+func (this *Lib) ListGatewaysOrdered(jwt jwt_http_router.Jwt, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
+	gateways, err := this.PermListGatewaysOrdered(jwt, "r", limit, offset, orderfeature, direction)
 	if err != nil {
 		log.Println("ERROR ListGateways.PermListGateways()", err)
 		return result, err
 	}
-	return completeGatewayList(jwt, gateways)
+	return this.completeGatewayList(jwt, gateways)
 }
 
-func SearchGateways(jwt jwt_http_router.Jwt, query string, limit string, offset string) (result []map[string]interface{}, err error) {
-	gateways, err := PermSearchGateways(jwt, query, "r", limit, offset)
+func (this *Lib) SearchGateways(jwt jwt_http_router.Jwt, query string, limit string, offset string) (result []map[string]interface{}, err error) {
+	gateways, err := this.PermSearchGateways(jwt, query, "r", limit, offset)
 	if err != nil {
 		return result, err
 	}
-	return completeGatewayList(jwt, gateways)
+	return this.completeGatewayList(jwt, gateways)
 }
 
-func SearchGatewaysOrdered(jwt jwt_http_router.Jwt, query string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	gateways, err := PermSearchGatewaysOrdered(jwt, query, "r", limit, offset, orderfeature, direction)
+func (this *Lib) SearchGatewaysOrdered(jwt jwt_http_router.Jwt, query string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
+	gateways, err := this.PermSearchGatewaysOrdered(jwt, query, "r", limit, offset, orderfeature, direction)
 	if err != nil {
 		return result, err
 	}
-	return completeGatewayList(jwt, gateways)
+	return this.completeGatewayList(jwt, gateways)
 }
 
-func completeGatewayList(jwt jwt_http_router.Jwt, gateways []map[string]interface{}) (result []map[string]interface{}, err error) {
+func (this *Lib) completeGatewayList(jwt jwt_http_router.Jwt, gateways []map[string]interface{}) (result []map[string]interface{}, err error) {
 	ids := []string{}
 	gatewayMap := map[string]map[string]interface{}{}
 	for _, gateway := range gateways {
@@ -136,7 +134,7 @@ func completeGatewayList(jwt jwt_http_router.Jwt, gateways []map[string]interfac
 		ids = append(ids, idStr)
 		gatewayMap[idStr] = gateway
 	}
-	logStates, err := GetGatewayLogStates(jwt, ids)
+	logStates, err := this.GetGatewayLogStates(jwt, ids)
 	if err != nil {
 		log.Println("ERROR completeGatewayList.GetGatewayLogStates()", err)
 		return result, err

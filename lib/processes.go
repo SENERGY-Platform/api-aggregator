@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 InfAI (CC SES)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package lib
 
 import (
@@ -8,8 +24,8 @@ import (
 	"strings"
 )
 
-func GetExtendedProcessList(jwt jwt_http_router.Jwt, query url.Values) (result []map[string]interface{}, err error) {
-	processes, err := GetProcessDeploymentList(jwt, query)
+func (this *Lib) GetExtendedProcessList(jwt jwt_http_router.Jwt, query url.Values) (result []map[string]interface{}, err error) {
+	processes, err := this.GetProcessDeploymentList(jwt, query)
 	if err != nil {
 		return result, err
 	}
@@ -22,7 +38,7 @@ func GetExtendedProcessList(jwt jwt_http_router.Jwt, query url.Values) (result [
 		}
 		ids = append(ids, id)
 	}
-	metadata, err := GetProcessDependencyList(jwt, ids)
+	metadata, err := this.GetProcessDependencyList(jwt, ids)
 	metadataIndex := map[string]Metadata{}
 	for _, m := range metadata {
 		metadataIndex[m.Process] = m
@@ -44,13 +60,13 @@ func GetExtendedProcessList(jwt jwt_http_router.Jwt, query url.Values) (result [
 	return
 }
 
-func GetProcessDeploymentList(jwt jwt_http_router.Jwt, query url.Values) (result []map[string]interface{}, err error) {
-	err = jwt.Impersonate.GetJSON(Config.CamundaWrapperUrl+"/deployment?"+query.Encode(), &result)
+func (this *Lib) GetProcessDeploymentList(jwt jwt_http_router.Jwt, query url.Values) (result []map[string]interface{}, err error) {
+	err = jwt.Impersonate.GetJSON(this.config.CamundaWrapperUrl+"/deployment?"+query.Encode(), &result)
 	return
 }
 
-func GetProcessDependencyList(jwt jwt_http_router.Jwt, processIds []string) (result []Metadata, err error) {
-	err = jwt.Impersonate.GetJSON(Config.ProcessDeploymentUrl+"/dependencies?deployments="+strings.Join(processIds, ","), &result)
+func (this *Lib) GetProcessDependencyList(jwt jwt_http_router.Jwt, processIds []string) (result []Metadata, err error) {
+	err = jwt.Impersonate.GetJSON(this.config.ProcessDeploymentUrl+"/dependencies?deployments="+strings.Join(processIds, ","), &result)
 	return
 }
 

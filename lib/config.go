@@ -27,7 +27,7 @@ import (
 	"strings"
 )
 
-type ConfigStruct struct {
+type Config struct {
 	ServerPort string
 	LogLevel   string
 
@@ -42,31 +42,20 @@ type ConfigStruct struct {
 	ForceAuth string
 }
 
-type ConfigType *ConfigStruct
-
-var Config ConfigType
-
-func LoadConfig(location string) error {
+func LoadConfig(location string) (config Config, err error) {
 	file, error := os.Open(location)
 	if error != nil {
 		log.Println("error on config load: ", error)
-		return error
+		return config, error
 	}
 	decoder := json.NewDecoder(file)
-	configuration := ConfigStruct{}
-	error = decoder.Decode(&configuration)
+	error = decoder.Decode(&config)
 	if error != nil {
 		log.Println("invalid config json: ", error)
-		return error
+		return config, error
 	}
-	HandleEnvironmentVars(&configuration)
-	HandleDefaultValues(&configuration)
-	Config = &configuration
-	return nil
-}
-
-func HandleDefaultValues(config ConfigType) {
-
+	handleEnvironmentVars(&config)
+	return config, nil
 }
 
 var camel = regexp.MustCompile("(^[^A-Z]*|[A-Z]*)([A-Z][^A-Z]+|$)")
@@ -85,7 +74,7 @@ func fieldNameToEnvName(s string) string {
 }
 
 // preparations for docker
-func HandleEnvironmentVars(config ConfigType) {
+func handleEnvironmentVars(config *Config) {
 	configValue := reflect.Indirect(reflect.ValueOf(config))
 	configType := configValue.Type()
 	for index := 0; index < configType.NumField(); index++ {
@@ -101,12 +90,30 @@ func HandleEnvironmentVars(config ConfigType) {
 			if configValue.FieldByName(fieldName).Kind() == reflect.String {
 				configValue.FieldByName(fieldName).SetString(envValue)
 			}
+			if configValue.FieldByName(fieldName).Kind() == reflect.Bool {
+				b, _ := strconv.ParseBool(envValue)
+				configValue.FieldByName(fieldName).SetBool(b)
+			}
+			if configValue.FieldByName(fieldName).Kind() == reflect.Float64 {
+				f, _ := strconv.ParseFloat(envValue, 64)
+				configValue.FieldByName(fieldName).SetFloat(f)
+			}
 			if configValue.FieldByName(fieldName).Kind() == reflect.Slice {
 				val := []string{}
 				for _, element := range strings.Split(envValue, ",") {
 					val = append(val, strings.TrimSpace(element))
 				}
 				configValue.FieldByName(fieldName).Set(reflect.ValueOf(val))
+			}
+			if configValue.FieldByName(fieldName).Kind() == reflect.Map {
+				value := map[string]string{}
+				for _, element := range strings.Split(envValue, ",") {
+					keyVal := strings.Split(element, ":")
+					key := strings.TrimSpace(keyVal[0])
+					val := strings.TrimSpace(keyVal[1])
+					value[key] = val
+				}
+				configValue.FieldByName(fieldName).Set(reflect.ValueOf(value))
 			}
 		}
 	}

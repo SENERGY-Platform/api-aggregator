@@ -20,24 +20,24 @@ import (
 	"github.com/SmartEnergyPlatform/jwt-http-router"
 )
 
-func GetDeviceLogStates(jwt jwt_http_router.Jwt, deviceIds []string) (result map[string]bool, err error) {
+func (this *Lib) GetDeviceLogStates(jwt jwt_http_router.Jwt, deviceIds []string) (result map[string]bool, err error) {
 	result = map[string]bool{}
-	err = jwt.Impersonate.PostJSON(Config.ConnectionLogUrl+"/intern/state/device/check", deviceIds, &result)
+	err = jwt.Impersonate.PostJSON(this.config.ConnectionLogUrl+"/intern/state/device/check", deviceIds, &result)
 	return
 }
 
-func GetGatewayLogStates(jwt jwt_http_router.Jwt, deviceIds []string) (result map[string]bool, err error) {
+func (this *Lib) GetGatewayLogStates(jwt jwt_http_router.Jwt, deviceIds []string) (result map[string]bool, err error) {
 	result = map[string]bool{}
-	err = jwt.Impersonate.PostJSON(Config.ConnectionLogUrl+"/intern/state/gateway/check", deviceIds, &result)
+	err = jwt.Impersonate.PostJSON(this.config.ConnectionLogUrl+"/intern/state/gateway/check", deviceIds, &result)
 	return
 }
 
-func GetDeviceLogHistory(jwt jwt_http_router.Jwt, deviceIds []string, duration string) (result map[string]HistorySeries, err error) {
-	return GetLogHistory(jwt, "device", deviceIds, duration)
+func (this *Lib) GetDeviceLogHistory(jwt jwt_http_router.Jwt, deviceIds []string, duration string) (result map[string]HistorySeries, err error) {
+	return this.GetLogHistory(jwt, "device", deviceIds, duration)
 }
 
-func GetGatewayLogHistory(jwt jwt_http_router.Jwt, ids []string, duration string) (result map[string]HistorySeries, err error) {
-	return GetLogHistory(jwt, "gateway", ids, duration)
+func (this *Lib) GetGatewayLogHistory(jwt jwt_http_router.Jwt, ids []string, duration string) (result map[string]HistorySeries, err error) {
+	return this.GetLogHistory(jwt, "gateway", ids, duration)
 }
 
 type HistoryResult struct {
@@ -51,10 +51,10 @@ type HistorySeries struct {
 	Values  [][]interface{}   `json:"values"`
 }
 
-func GetLogHistory(jwt jwt_http_router.Jwt, kind string, ids []string, duration string) (result map[string]HistorySeries, err error) {
+func (this *Lib) GetLogHistory(jwt jwt_http_router.Jwt, kind string, ids []string, duration string) (result map[string]HistorySeries, err error) {
 	result = map[string]HistorySeries{}
 	temp := []HistoryResult{}
-	err = jwt.Impersonate.PostJSON(Config.ConnectionLogUrl+"/intern/history/"+kind+"/"+duration, ids, &temp)
+	err = jwt.Impersonate.PostJSON(this.config.ConnectionLogUrl+"/intern/history/"+kind+"/"+duration, ids, &temp)
 	if err != nil {
 		return result, err
 	}
@@ -64,14 +64,14 @@ func GetLogHistory(jwt jwt_http_router.Jwt, kind string, ids []string, duration 
 	return
 }
 
-func GetLogstarts(jwt jwt_http_router.Jwt, kind string, ids []string) (result map[string]interface{}, err error) {
+func (this *Lib) GetLogstarts(jwt jwt_http_router.Jwt, kind string, ids []string) (result map[string]interface{}, err error) {
 	result = map[string]interface{}{}
-	err = jwt.Impersonate.PostJSON(Config.ConnectionLogUrl+"/intern/logstarts/"+kind, ids, &result)
+	err = jwt.Impersonate.PostJSON(this.config.ConnectionLogUrl+"/intern/logstarts/"+kind, ids, &result)
 	return
 }
 
-func GetLogedges(jwt jwt_http_router.Jwt, kind string, ids []string, duration string) (result map[string]interface{}, err error) {
+func (this *Lib) GetLogedges(jwt jwt_http_router.Jwt, kind string, ids []string, duration string) (result map[string]interface{}, err error) {
 	result = map[string]interface{}{}
-	err = jwt.Impersonate.PostJSON(Config.ConnectionLogUrl+"/intern/logedge/"+kind+"/"+duration, ids, &result)
+	err = jwt.Impersonate.PostJSON(this.config.ConnectionLogUrl+"/intern/logedge/"+kind+"/"+duration, ids, &result)
 	return
 }

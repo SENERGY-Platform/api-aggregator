@@ -1,6 +1,7 @@
-package lib
+package deprecated
 
 import (
+	"github.com/SmartEnergyPlatform/api-aggregator/lib"
 	"github.com/SmartEnergyPlatform/util/http/cors"
 	"github.com/SmartEnergyPlatform/util/http/logger"
 	"net/http"
@@ -9,14 +10,14 @@ import (
 )
 
 func TestStartApi(t *testing.T) {
-	err := LoadConfig("./config.json")
+	config, err := lib.LoadConfig("../../config.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	httpHandler := getRoutes()
+	httpHandler := getRoutes(lib.New(config))
 	corseHandler := cors.New(httpHandler)
-	logger := logger.New(corseHandler, Config.LogLevel)
-	go func(){
+	logger := logger.New(corseHandler, config.LogLevel)
+	go func() {
 		err = http.ListenAndServe(":", logger)
 		if err != nil {
 			t.Fatal(err)
