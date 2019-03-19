@@ -19,10 +19,8 @@ package lib
 import (
 	"errors"
 	"github.com/SmartEnergyPlatform/jwt-http-router"
-	"sort"
-	"strings"
-
 	"log"
+	"sort"
 )
 
 func (this *Lib) GetConnectionFilteredDevicesOrder(jwt jwt_http_router.Jwt, value string, sortAsc bool) (result []map[string]interface{}, err error) {
@@ -32,21 +30,6 @@ func (this *Lib) GetConnectionFilteredDevicesOrder(jwt jwt_http_router.Jwt, valu
 		return result, err
 	}
 
-	result = this.SortByName(result, sortAsc)
-
-	return
-}
-
-func (this *Lib) GetConnectionFilteredDevicesSearchOrder(jwt jwt_http_router.Jwt, value string, searchText string, sortAsc bool) (result []map[string]interface{}, err error) {
-	result, err = this.GetConnectionFilteredDevices(jwt, value)
-
-	if err != nil {
-		log.Println("ERROR GetConnectionFilteredDevices", err)
-		return result, err
-
-	}
-
-	result = filter(result, "name", searchText)
 	result = this.SortByName(result, sortAsc)
 
 	return
@@ -67,16 +50,6 @@ func (this *Lib) SortByName(input []map[string]interface{}, sortAsc bool) (outpu
 	return
 }
 
-func filter(list []map[string]interface{}, key string, value string) (result []map[string]interface{}) {
-	for _, element := range list {
-		str, ok := element[key].(string)
-		if ok && strings.Contains(str, value) {
-			result = append(result, element)
-		}
-	}
-	return
-}
-
 func (this *Lib) GetConnectionFilteredDevices(jwt jwt_http_router.Jwt, value string) (result []map[string]interface{}, err error) {
 	devices, err := this.PermListAllDevices(jwt, "r")
 	if err != nil {
@@ -84,6 +57,10 @@ func (this *Lib) GetConnectionFilteredDevices(jwt jwt_http_router.Jwt, value str
 		return result, err
 	}
 	return this.FilterDevicesByState(jwt, devices, value)
+}
+
+func (this *Lib) ListAllDevices(jwt jwt_http_router.Jwt) (result []map[string]interface{}, err error) {
+	return this.PermListAllDevices(jwt, "r")
 }
 
 func (this *Lib) FilterDevicesByState(jwt jwt_http_router.Jwt, devices []map[string]interface{}, state string) (result []map[string]interface{}, err error) {

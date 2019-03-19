@@ -31,13 +31,13 @@ import (
 
 func Start(lib lib.Interface) {
 	log.Println("start server on port: ", lib.Config().ServerPort)
-	httpHandler := getRoutes(lib)
+	httpHandler := GetRoutes(lib)
 	corseHandler := cors.New(httpHandler)
 	logger := logger.New(corseHandler, lib.Config().LogLevel)
 	log.Println(http.ListenAndServe(":"+lib.Config().ServerPort, logger))
 }
 
-func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
+func GetRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 	router = jwt_http_router.New(jwt_http_router.JwtConfig{
 		ForceUser: lib.Config().ForceUser == "true",
 		ForceAuth: lib.Config().ForceAuth == "true",
@@ -141,29 +141,32 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 		response.To(res).Json(result)
 	})
 
-	router.GET("/filter/devices/state/:value/search/:searchtext/name/asc", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
-		value := ps.ByName("value")
-		searchText := ps.ByName("searchtext")
-		result, err := lib.GetConnectionFilteredDevicesSearchOrder(jwt, value, searchText, true)
-		if err != nil {
-			log.Println("ERROR: ", err)
-			http.Error(res, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		response.To(res).Json(result)
-	})
+	//old maintenance helper
+	/*
+		router.GET("/filter/devices/state/:value/search/:searchtext/name/asc", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+			value := ps.ByName("value")
+			searchText := ps.ByName("searchtext")
+			result, err := lib.GetConnectionFilteredDevicesSearchOrder(jwt, value, searchText, true)
+			if err != nil {
+				log.Println("ERROR: ", err)
+				http.Error(res, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			response.To(res).Json(result)
+		})
 
-	router.GET("/filter/devices/state/:value/search/:searchtext/name/desc", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
-		value := ps.ByName("value")
-		searchText := ps.ByName("searchtext")
-		result, err := lib.GetConnectionFilteredDevicesSearchOrder(jwt, value, searchText, false)
-		if err != nil {
-			log.Println("ERROR: ", err)
-			http.Error(res, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		response.To(res).Json(result)
-	})
+		router.GET("/filter/devices/state/:value/search/:searchtext/name/desc", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+			value := ps.ByName("value")
+			searchText := ps.ByName("searchtext")
+			result, err := lib.GetConnectionFilteredDevicesSearchOrder(jwt, value, searchText, false)
+			if err != nil {
+				log.Println("ERROR: ", err)
+				http.Error(res, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			response.To(res).Json(result)
+		})
+	*/
 
 	router.GET("/filter/devices/state/:value", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
 		value := ps.ByName("value")

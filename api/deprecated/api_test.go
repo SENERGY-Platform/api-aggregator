@@ -14,7 +14,7 @@ func TestStartApi(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	httpHandler := getRoutes(lib.New(config))
+	httpHandler := GetRoutes(lib.New(config))
 	corseHandler := cors.New(httpHandler)
 	logger := logger.New(corseHandler, config.LogLevel)
 	go func() {

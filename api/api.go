@@ -19,11 +19,12 @@ package api
 import (
 	"github.com/SmartEnergyPlatform/api-aggregator/lib"
 	"github.com/SmartEnergyPlatform/jwt-http-router"
-	"log"
-	"net/http"
-
 	"github.com/SmartEnergyPlatform/util/http/cors"
 	"github.com/SmartEnergyPlatform/util/http/logger"
+	"github.com/SmartEnergyPlatform/util/http/response"
+	"log"
+	"net/http"
+	"strings"
 )
 
 func Start(lib lib.Interface) {
@@ -40,6 +41,160 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 		ForceAuth: lib.Config().ForceAuth == "true",
 	})
 
+	/*
+		query-parameter:
+			mutual exclusive:
+				usertag {string} 	filters result by user-tag
+				tag		{string} 	filters result by tag
+				search  {string}	filters by partial text match
+				ids		{string,string...} returns by ids
+			optional:
+				state 	{string} 	filters result by device state
+				sort 	{string} 	sorts result by filed; of data-source does not support sorting a sorting will be performed locally
+										name | name.asc | name.desc
+				limit 	{int} 		may default to 100; no effect when used with usertag and tag
+				offset 	{int}		may default to 0; no effect when used with usertag and tag
+	*/
+	router.GET("/devices", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+		usertag := r.URL.Query().Get("usertag")
+		tag := r.URL.Query().Get("tag")
+		state := r.URL.Query().Get("state")
+		sort := r.URL.Query().Get("sort")
+		limit := r.URL.Query().Get("limit")
+		offset := r.URL.Query().Get("offset")
+		search := r.URL.Query().Get("search")
+		ids := r.URL.Query().Get("ids")
+
+		sorted := false
+		result := []map[string]interface{}{}
+		var err error
+		switch {
+		case ids != "":
+			idList := strings.Split(strings.Replace(ids, " ", "", -1), ",")
+			if limit != "" || offset != "" {
+				limit, offset = limitOffsetDefault(limit, offset)
+				if sort == "" {
+					sort = "name"
+				}
+				parts := strings.Split(sort, ".")
+				orderfeature := parts[0]
+				direction := "asc"
+				if len(parts) > 1 {
+					direction = parts[1]
+				}
+				sorted = true
+				result, err = lib.CompleteDevicesOrdered(jwt, idList, limit, offset, orderfeature, direction)
+			} else {
+				result, err = lib.CompleteDevices(jwt, idList)
+			}
+		case usertag != "":
+			if limit != "" || offset != "" {
+				limit, offset = limitOffsetDefault(limit, offset)
+				if sort == "" {
+					sort = "name"
+				}
+				parts := strings.Split(sort, ".")
+				orderfeature := parts[0]
+				direction := "asc"
+				if len(parts) > 1 {
+					direction = parts[1]
+				}
+				sorted = true
+				result, err = lib.ListOrderedDevicesByUserTag(jwt, usertag, limit, offset, orderfeature, direction)
+			} else {
+				result, err = lib.ListDevicesByUserTag(jwt, usertag)
+			}
+		case tag != "":
+			if limit != "" || offset != "" {
+				limit, offset = limitOffsetDefault(limit, offset)
+				if sort == "" {
+					sort = "name"
+				}
+				parts := strings.Split(sort, ".")
+				orderfeature := parts[0]
+				direction := "asc"
+				if len(parts) > 1 {
+					direction = parts[1]
+				}
+				sorted = true
+				result, err = lib.ListOrderdDevicesByTag(jwt, tag, limit, offset, orderfeature, direction)
+			} else {
+				result, err = lib.ListDevicesByTag(jwt, tag)
+			}
+		case search != "":
+			limit, offset = limitOffsetDefault(limit, offset)
+			if sort != "" {
+				parts := strings.Split(sort, ".")
+				orderfeature := parts[0]
+				direction := "asc"
+				if len(parts) > 1 {
+					direction = parts[1]
+				}
+				sorted = true
+				result, err = lib.SearchDevicesOrdered(jwt, search, limit, offset, orderfeature, direction)
+			} else {
+				limit, offset = limitOffsetDefault(limit, offset)
+				result, err = lib.SearchDevices(jwt, search, limit, offset)
+			}
+		default:
+			if limit != "" || offset != "" {
+				limit, offset = limitOffsetDefault(limit, offset)
+				if sort != "" {
+					parts := strings.Split(sort, ".")
+					orderfeature := parts[0]
+					direction := "asc"
+					if len(parts) > 1 {
+						direction = parts[1]
+					}
+					sorted = true
+					result, err = lib.ListDevicesOrdered(jwt, limit, offset, orderfeature, direction)
+				} else {
+					limit, offset = limitOffsetDefault(limit, offset)
+					result, err = lib.ListDevices(jwt, limit, offset)
+				}
+			} else {
+				result, err = lib.ListAllDevices(jwt)
+			}
+		}
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if state != "" {
+			result, err = lib.FilterDevicesByState(jwt, result, state)
+			if err != nil {
+				log.Println("ERROR: ", err)
+				http.Error(res, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+		if !sorted && sort != "" {
+			switch sort {
+			case "name.asc":
+				result = lib.SortByName(result, true)
+			case "name.desc":
+				result = lib.SortByName(result, false)
+			case "name":
+				result = lib.SortByName(result, true)
+			default:
+				http.Error(res, "unable to interpret sort "+sort, http.StatusBadRequest)
+				return
+			}
+		}
+		response.To(res).Json(result)
+	})
+
 	return
 
+}
+
+func limitOffsetDefault(limit, offset string) (string, string) {
+	if limit == "" {
+		limit = "100"
+	}
+	if offset == "" {
+		offset = "0"
+	}
+	return limit, offset
 }
