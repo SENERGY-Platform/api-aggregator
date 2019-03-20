@@ -126,8 +126,9 @@ func (this *mock) GetDevicesHistory(jwt jwt_http_router.Jwt, duration string) (r
 }
 
 func (this *mock) GetGatewaysHistory(jwt jwt_http_router.Jwt, duration string) (result []map[string]interface{}, err error) {
-	this.Log("GetGatewaysHistory", jwt, duration)
-	return []map[string]interface{}{}, nil
+	result, err = this.PermListAllGateways(jwt, "r")
+	result, err = this.CompleteGatewayHistory(jwt, duration, result)
+	return
 }
 
 func (this *mock) ListGateways(jwt jwt_http_router.Jwt, limit string, offset string) (result []map[string]interface{}, err error) {
@@ -171,6 +172,20 @@ func (this *mock) PermListAllDevices(jwt jwt_http_router.Jwt, s string) (result 
 func (this *mock) CompleteDeviceHistory(jwt jwt_http_router.Jwt, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error) {
 	this.Log("CompleteDeviceHistory", jwt, duration, devices)
 	return []map[string]interface{}{}, nil
+}
+
+func (this *mock) CompleteGatewayHistory(jwt jwt_http_router.Jwt, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error) {
+	this.Log("CompleteGatewayHistory", jwt, duration, devices)
+	return []map[string]interface{}{}, nil
+}
+
+func (this *mock) PermListAllGateways(jwt jwt_http_router.Jwt, right string) (result []map[string]interface{}, err error) {
+	this.Log("PermListAllGateways", jwt, right)
+	return []map[string]interface{}{}, nil
+}
+
+func (this *mock) ListAllGateways(jwt jwt_http_router.Jwt) (result []map[string]interface{}, err error) {
+	return this.PermListAllGateways(jwt, "r")
 }
 
 func newMock() (oldApi string, newApi string, libForOld *mock, libForNew *mock, stop func()) {

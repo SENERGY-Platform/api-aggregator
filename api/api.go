@@ -51,7 +51,7 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 			optional:
 				log		{string}	influxdb duration (for example 4h) https://docs.influxdata.com/influxdb/v1.7/query_language/spec/#durations
 				state 	{string} 	filters result by device state
-				sort 	{string} 	sorts result by filed; of data-source does not support sorting a sorting will be performed locally
+				sort 	{string} 	sorts result by filed; if data-source does not support sorting, it will be performed locally
 										name | name.asc | name.desc
 				limit 	{int} 		may default to 100; no effect when used with usertag and tag
 				offset 	{int}		may default to 0; no effect when used with usertag and tag
@@ -78,12 +78,7 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 				if sort == "" {
 					sort = "name"
 				}
-				parts := strings.Split(sort, ".")
-				orderfeature := parts[0]
-				direction := "asc"
-				if len(parts) > 1 {
-					direction = parts[1]
-				}
+				orderfeature, direction := getSortParts(sort)
 				sorted = true
 				result, err = lib.CompleteDevicesOrdered(jwt, idList, limit, offset, orderfeature, direction)
 			} else {
@@ -95,12 +90,7 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 				if sort == "" {
 					sort = "name"
 				}
-				parts := strings.Split(sort, ".")
-				orderfeature := parts[0]
-				direction := "asc"
-				if len(parts) > 1 {
-					direction = parts[1]
-				}
+				orderfeature, direction := getSortParts(sort)
 				sorted = true
 				result, err = lib.ListOrderedDevicesByUserTag(jwt, usertag, limit, offset, orderfeature, direction)
 			} else {
@@ -112,12 +102,7 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 				if sort == "" {
 					sort = "name"
 				}
-				parts := strings.Split(sort, ".")
-				orderfeature := parts[0]
-				direction := "asc"
-				if len(parts) > 1 {
-					direction = parts[1]
-				}
+				orderfeature, direction := getSortParts(sort)
 				sorted = true
 				result, err = lib.ListOrderdDevicesByTag(jwt, tag, limit, offset, orderfeature, direction)
 			} else {
@@ -126,12 +111,7 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 		case search != "":
 			limit, offset = limitOffsetDefault(limit, offset)
 			if sort != "" {
-				parts := strings.Split(sort, ".")
-				orderfeature := parts[0]
-				direction := "asc"
-				if len(parts) > 1 {
-					direction = parts[1]
-				}
+				orderfeature, direction := getSortParts(sort)
 				sorted = true
 				result, err = lib.SearchDevicesOrdered(jwt, search, limit, offset, orderfeature, direction)
 			} else {
@@ -142,12 +122,7 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 			if limit != "" || offset != "" {
 				limit, offset = limitOffsetDefault(limit, offset)
 				if sort != "" {
-					parts := strings.Split(sort, ".")
-					orderfeature := parts[0]
-					direction := "asc"
-					if len(parts) > 1 {
-						direction = parts[1]
-					}
+					orderfeature, direction := getSortParts(sort)
 					sorted = true
 					result, err = lib.ListDevicesOrdered(jwt, limit, offset, orderfeature, direction)
 				} else {
@@ -176,6 +151,12 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 			result, err = lib.CompleteDeviceHistory(jwt, logDuration, result)
 		}
 
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		if !sorted && sort != "" {
 			switch sort {
 			case "name.asc":
@@ -192,6 +173,76 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 		response.To(res).Json(result)
 	})
 
+	/*
+		query-parameter:
+			optional:
+				search  {string}	filters by partial text match
+				limit 	{int} 		may default to 100
+				offset 	{int}		may default to 0
+				log		{string}	influxdb duration (for example 4h) https://docs.influxdata.com/influxdb/v1.7/query_language/spec/#durations
+				sort 	{string} 	sorts result by filed
+										name | name.asc | name.desc
+	*/
+	router.GET("/gateways", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+		limit := r.URL.Query().Get("limit")
+		offset := r.URL.Query().Get("offset")
+		logDuration := r.URL.Query().Get("log")
+		search := r.URL.Query().Get("search")
+		sort := r.URL.Query().Get("sort")
+
+		result := []map[string]interface{}{}
+		var err error
+
+		switch {
+		case limit == "" && offset == "" && sort == "" && search == "":
+			result, err = lib.ListAllGateways(jwt)
+		case search != "" && sort == "":
+			limit, offset = limitOffsetDefault(limit, offset)
+			result, err = lib.SearchGateways(jwt, search, limit, offset)
+		case search != "" && sort != "":
+			orderfeature, direction := getSortParts(sort)
+			limit, offset = limitOffsetDefault(limit, offset)
+			result, err = lib.SearchGatewaysOrdered(jwt, search, limit, offset, orderfeature, direction)
+		case search == "" && sort == "":
+			limit, offset = limitOffsetDefault(limit, offset)
+			result, err = lib.ListGateways(jwt, limit, offset)
+		case search == "" && sort != "":
+			limit, offset = limitOffsetDefault(limit, offset)
+			orderfeature, direction := getSortParts(sort)
+			result, err = lib.ListGatewaysOrdered(jwt, limit, offset, orderfeature, direction)
+		}
+
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if logDuration != "" {
+			result, err = lib.CompleteGatewayHistory(jwt, logDuration, result)
+		}
+
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		response.To(res).Json(result)
+	})
+
+	//reads query parameter like https://docs.camunda.org/manual/7.5/reference/rest/deployment/get-query/
+	router.GET("/processes", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+		log.Println("DEBUG: ", r.URL.Query())
+		result, err := lib.GetExtendedProcessList(jwt, r.URL.Query())
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		response.To(res).Json(result)
+	})
+
 	return
 
 }
@@ -204,4 +255,14 @@ func limitOffsetDefault(limit, offset string) (string, string) {
 		offset = "0"
 	}
 	return limit, offset
+}
+
+func getSortParts(sort string) (orderfeature string, direction string) {
+	parts := strings.Split(sort, ".")
+	orderfeature = parts[0]
+	direction = "asc"
+	if len(parts) > 1 {
+		direction = parts[1]
+	}
+	return
 }

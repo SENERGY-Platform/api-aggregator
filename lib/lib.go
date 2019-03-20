@@ -46,6 +46,8 @@ type Interface interface {
 	SearchGatewaysOrdered(jwt jwt_http_router.Jwt, query string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error)
 	GetExtendedProcessList(jwt jwt_http_router.Jwt, query url.Values) (result []map[string]interface{}, err error)
 	CompleteDeviceHistory(jwt jwt_http_router.Jwt, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error)
+	CompleteGatewayHistory(jwt jwt_http_router.Jwt, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error)
+	ListAllGateways(jwt jwt_http_router.Jwt) (result []map[string]interface{}, err error)
 }
 
 type Lib struct {

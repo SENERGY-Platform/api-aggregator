@@ -866,3 +866,403 @@ func TestDeviceHistory(t *testing.T) {
 		return
 	}
 }
+
+// /history/gateways/:duration
+func TestGatewayHistory(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/history/gateways/4h")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?log=4h")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /list/gateways/:limit/:offset
+func TestGatewayList(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/list/gateways/100/0")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?limit=100&offset=0")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /list/gateways/:limit/:offset
+func TestGatewayListDefaultLimit(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/list/gateways/100/0")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?offset=0")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /list/gateways/:limit/:offset
+func TestGatewayListDefaultOffset(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/list/gateways/100/0")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?limit=100")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /search/gateways/:query/:limit/:offset
+func TestSearchGateway(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/search/gateways/" + url.QueryEscape("search#text") + "/100/0")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?limit=100&offset=0&search=" + url.QueryEscape("search#text"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /search/gateways/:query/:limit/:offset
+func TestSearchGatewayDefaultLimit(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/search/gateways/" + url.QueryEscape("search#text") + "/100/0")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?offset=0&search=" + url.QueryEscape("search#text"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /search/gateways/:query/:limit/:offset
+func TestSearchGatewayDefaultOffset(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/search/gateways/" + url.QueryEscape("search#text") + "/100/0")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?limit=100&search=" + url.QueryEscape("search#text"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /search/gateways/:query/:limit/:offset
+func TestSearchGatewayDefault(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/search/gateways/" + url.QueryEscape("search#text") + "/100/0")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?search=" + url.QueryEscape("search#text"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /list/gateways/:limit/:offset/:orderfeature/asc
+func TestListGatewayAsc(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/list/gateways/100/0/orderfeature/asc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?limit=100&offset=0&sort=orderfeature.asc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /list/gateways/:limit/:offset/:orderfeature/asc
+func TestListGatewayDesc(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/list/gateways/100/0/orderfeature/desc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?limit=100&offset=0&sort=orderfeature.desc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /list/gateways/:limit/:offset/:orderfeature/asc
+func TestListGateway(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/list/gateways/100/0/orderfeature/asc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?limit=100&offset=0&sort=orderfeature")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /list/gateways/:limit/:offset/:orderfeature/asc
+func TestListGatewayDefaultLimit(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/list/gateways/100/0/orderfeature/asc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?offset=0&sort=orderfeature")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /list/gateways/:limit/:offset/:orderfeature/asc
+func TestListGatewayDefaultOffset(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/list/gateways/100/0/orderfeature/asc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?limit=100&sort=orderfeature")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /list/gateways/:limit/:offset/:orderfeature/asc
+func TestListGatewayDefault(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/list/gateways/100/0/orderfeature/asc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?sort=orderfeature")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /search/gateways/:query/:limit/:offset/:orderfeature/asc
+func TestSearchGatewayOrdered(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/search/gateways/" + url.QueryEscape("search#text") + "/100/0/orderfeature/asc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?sort=orderfeature&limit=100&offset=0&search=" + url.QueryEscape("search#text"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /search/gateways/:query/:limit/:offset/:orderfeature/asc
+func TestSearchGatewayOrderedAsc(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/search/gateways/" + url.QueryEscape("search#text") + "/100/0/orderfeature/asc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?sort=orderfeature.asc&limit=100&offset=0&search=" + url.QueryEscape("search#text"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /search/gateways/:query/:limit/:offset/:orderfeature/asc
+func TestSearchGatewayOrderedDesc(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/search/gateways/" + url.QueryEscape("search#text") + "/100/0/orderfeature/desc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?sort=orderfeature.desc&limit=100&offset=0&search=" + url.QueryEscape("search#text"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /search/gateways/:query/:limit/:offset/:orderfeature/asc
+func TestSearchGatewayOrderedDefaultLimit(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/search/gateways/" + url.QueryEscape("search#text") + "/100/0/orderfeature/asc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?sort=orderfeature&offset=0&search=" + url.QueryEscape("search#text"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /search/gateways/:query/:limit/:offset/:orderfeature/asc
+func TestSearchGatewayOrderedDefaultOffset(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/search/gateways/" + url.QueryEscape("search#text") + "/100/0/orderfeature/asc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?sort=orderfeature&limit=100&search=" + url.QueryEscape("search#text"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}
+
+// /search/gateways/:query/:limit/:offset/:orderfeature/asc
+func TestSearchGatewayOrderedDefault(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/search/gateways/" + url.QueryEscape("search#text") + "/100/0/orderfeature/asc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/gateways?sort=orderfeature&search=" + url.QueryEscape("search#text"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}

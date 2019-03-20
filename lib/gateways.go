@@ -28,11 +28,11 @@ func (this *Lib) GetGatewaysHistory(jwt jwt_http_router.Jwt, duration string) (r
 		log.Println("ERROR PermListAllGateways()", err)
 		return result, err
 	}
-	result, err = this.completeGatewayHistory(jwt, duration, result)
+	result, err = this.CompleteGatewayHistory(jwt, duration, result)
 	return
 }
 
-func (this *Lib) completeGatewayHistory(jwt jwt_http_router.Jwt, duration string, gateways []map[string]interface{}) (result []map[string]interface{}, err error) {
+func (this *Lib) CompleteGatewayHistory(jwt jwt_http_router.Jwt, duration string, gateways []map[string]interface{}) (result []map[string]interface{}, err error) {
 	ids := []string{}
 	gatewayMap := map[string]map[string]interface{}{}
 	for _, gateway := range gateways {
@@ -90,6 +90,10 @@ func (this *Lib) ListGateways(jwt jwt_http_router.Jwt, limit string, offset stri
 		return result, err
 	}
 	return this.completeGatewayList(jwt, gateways)
+}
+
+func (this *Lib) ListAllGateways(jwt jwt_http_router.Jwt) (result []map[string]interface{}, err error) {
+	return this.PermListAllGateways(jwt, "r")
 }
 
 func (this *Lib) ListGatewaysOrdered(jwt jwt_http_router.Jwt, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
