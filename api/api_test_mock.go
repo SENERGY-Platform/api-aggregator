@@ -120,8 +120,9 @@ func (this *mock) CompleteDevicesOrdered(jwt jwt_http_router.Jwt, ids []string, 
 }
 
 func (this *mock) GetDevicesHistory(jwt jwt_http_router.Jwt, duration string) (result []map[string]interface{}, err error) {
-	this.Log("GetDevicesHistory", jwt, duration)
-	return []map[string]interface{}{}, nil
+	result, err = this.PermListAllDevices(jwt, "r")
+	result, err = this.CompleteDeviceHistory(jwt, duration, result)
+	return
 }
 
 func (this *mock) GetGatewaysHistory(jwt jwt_http_router.Jwt, duration string) (result []map[string]interface{}, err error) {
@@ -164,6 +165,11 @@ func (this *mock) Compare(other *mock) bool {
 
 func (this *mock) PermListAllDevices(jwt jwt_http_router.Jwt, s string) (result []map[string]interface{}, err error) {
 	this.Log("PermListAllDevices", jwt, s)
+	return []map[string]interface{}{}, nil
+}
+
+func (this *mock) CompleteDeviceHistory(jwt jwt_http_router.Jwt, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error) {
+	this.Log("CompleteDeviceHistory", jwt, duration, devices)
 	return []map[string]interface{}{}, nil
 }
 

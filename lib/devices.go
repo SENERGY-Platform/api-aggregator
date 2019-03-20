@@ -214,11 +214,11 @@ func (this *Lib) GetDevicesHistory(jwt jwt_http_router.Jwt, duration string) (re
 		log.Println("ERROR PermListAllDevices()", err)
 		return result, err
 	}
-	result, err = this.completeDeviceHistory(jwt, duration, result)
+	result, err = this.CompleteDeviceHistory(jwt, duration, result)
 	return
 }
 
-func (this *Lib) completeDeviceHistory(jwt jwt_http_router.Jwt, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error) {
+func (this *Lib) CompleteDeviceHistory(jwt jwt_http_router.Jwt, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error) {
 	ids := []string{}
 	deviceMap := map[string]map[string]interface{}{}
 	for _, device := range devices {

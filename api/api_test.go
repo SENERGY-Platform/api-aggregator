@@ -848,3 +848,21 @@ func TestSelectDevicesByIdsOrdered(t *testing.T) {
 }
 
 // /history/devices/:duration
+func TestDeviceHistory(t *testing.T) {
+	oldUrl, newUrl, mockOld, mockNew, stop := newMock()
+	defer stop()
+	err := testget(oldUrl + "/history/devices/4h")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = testget(newUrl + "/devices?log=4h")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !mockOld.Compare(mockNew) {
+		t.Error("\n", mockOld, "\n\n", mockNew)
+		return
+	}
+}

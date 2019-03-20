@@ -49,6 +49,7 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 				search  {string}	filters by partial text match
 				ids		{string,string...} returns by ids
 			optional:
+				log		{string}	influxdb duration (for example 4h) https://docs.influxdata.com/influxdb/v1.7/query_language/spec/#durations
 				state 	{string} 	filters result by device state
 				sort 	{string} 	sorts result by filed; of data-source does not support sorting a sorting will be performed locally
 										name | name.asc | name.desc
@@ -64,6 +65,7 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 		offset := r.URL.Query().Get("offset")
 		search := r.URL.Query().Get("search")
 		ids := r.URL.Query().Get("ids")
+		logDuration := r.URL.Query().Get("log")
 
 		sorted := false
 		result := []map[string]interface{}{}
@@ -169,6 +171,11 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 				return
 			}
 		}
+
+		if logDuration != "" {
+			result, err = lib.CompleteDeviceHistory(jwt, logDuration, result)
+		}
+
 		if !sorted && sort != "" {
 			switch sort {
 			case "name.asc":
