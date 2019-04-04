@@ -156,19 +156,7 @@ func (this *Lib) completeGatewayList(jwt jwt_http_router.Jwt, gateways []map[str
 	return
 }
 
-type GatewayDeviceWrapper struct {
-	Devices []IdWrapper `json:"devices,omitempty"                     rdf_field:"http://www.sepl.wifa.uni-leipzig.de/ontlogies/device-repo#connectsDevices"`
-}
-
-type IdWrapper struct {
-	Id string `json:"id,omitempty"`
-}
-
 func (this *Lib) GetGatewayDevices(jwt jwt_http_router.Jwt, id string) (ids []string, err error) {
-	wrapper := GatewayDeviceWrapper{}
-	err = jwt.Impersonate.GetJSON(this.config.IotUrl+"/gateway/"+url.PathEscape(id), &wrapper)
-	for _, idWrapper := range wrapper.Devices {
-		ids = append(ids, idWrapper.Id)
-	}
+	err = jwt.Impersonate.GetJSON(this.config.IotUrl+"/hubs/"+url.PathEscape(id)+"/devices?as=id", &ids)
 	return
 }
