@@ -876,7 +876,7 @@ func TestGatewayHistory(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?log=4h")
+	err = testget(newUrl + "/hubs?log=4h")
 	if err != nil {
 		t.Error(err)
 		return
@@ -896,7 +896,7 @@ func TestGatewayList(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?limit=100&offset=0")
+	err = testget(newUrl + "/hubs?limit=100&offset=0")
 	if err != nil {
 		t.Error(err)
 		return
@@ -916,7 +916,7 @@ func TestGatewayListDefaultLimit(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?offset=0")
+	err = testget(newUrl + "/hubs?offset=0")
 	if err != nil {
 		t.Error(err)
 		return
@@ -936,7 +936,7 @@ func TestGatewayListDefaultOffset(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?limit=100")
+	err = testget(newUrl + "/hubs?limit=100")
 	if err != nil {
 		t.Error(err)
 		return
@@ -956,7 +956,7 @@ func TestSearchGateway(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?limit=100&offset=0&search=" + url.QueryEscape("search#text"))
+	err = testget(newUrl + "/hubs?limit=100&offset=0&search=" + url.QueryEscape("search#text"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -976,7 +976,7 @@ func TestSearchGatewayDefaultLimit(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?offset=0&search=" + url.QueryEscape("search#text"))
+	err = testget(newUrl + "/hubs?offset=0&search=" + url.QueryEscape("search#text"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -996,7 +996,7 @@ func TestSearchGatewayDefaultOffset(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?limit=100&search=" + url.QueryEscape("search#text"))
+	err = testget(newUrl + "/hubs?limit=100&search=" + url.QueryEscape("search#text"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -1016,7 +1016,7 @@ func TestSearchGatewayDefault(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?search=" + url.QueryEscape("search#text"))
+	err = testget(newUrl + "/hubs?search=" + url.QueryEscape("search#text"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -1036,7 +1036,7 @@ func TestListGatewayAsc(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?limit=100&offset=0&sort=orderfeature.asc")
+	err = testget(newUrl + "/hubs?limit=100&offset=0&sort=orderfeature.asc")
 	if err != nil {
 		t.Error(err)
 		return
@@ -1056,7 +1056,7 @@ func TestListGatewayDesc(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?limit=100&offset=0&sort=orderfeature.desc")
+	err = testget(newUrl + "/hubs?limit=100&offset=0&sort=orderfeature.desc")
 	if err != nil {
 		t.Error(err)
 		return
@@ -1076,7 +1076,7 @@ func TestListGateway(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?limit=100&offset=0&sort=orderfeature")
+	err = testget(newUrl + "/hubs?limit=100&offset=0&sort=orderfeature")
 	if err != nil {
 		t.Error(err)
 		return
@@ -1096,7 +1096,7 @@ func TestListGatewayDefaultLimit(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?offset=0&sort=orderfeature")
+	err = testget(newUrl + "/hubs?offset=0&sort=orderfeature")
 	if err != nil {
 		t.Error(err)
 		return
@@ -1116,7 +1116,7 @@ func TestListGatewayDefaultOffset(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?limit=100&sort=orderfeature")
+	err = testget(newUrl + "/hubs?limit=100&sort=orderfeature")
 	if err != nil {
 		t.Error(err)
 		return
@@ -1136,7 +1136,7 @@ func TestListGatewayDefault(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?sort=orderfeature")
+	err = testget(newUrl + "/hubs?sort=orderfeature")
 	if err != nil {
 		t.Error(err)
 		return
@@ -1156,7 +1156,7 @@ func TestSearchGatewayOrdered(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?sort=orderfeature&limit=100&offset=0&search=" + url.QueryEscape("search#text"))
+	err = testget(newUrl + "/hubs?sort=orderfeature&limit=100&offset=0&search=" + url.QueryEscape("search#text"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -1176,7 +1176,7 @@ func TestSearchGatewayOrderedAsc(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?sort=orderfeature.asc&limit=100&offset=0&search=" + url.QueryEscape("search#text"))
+	err = testget(newUrl + "/hubs?sort=orderfeature.asc&limit=100&offset=0&search=" + url.QueryEscape("search#text"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -1196,7 +1196,7 @@ func TestSearchGatewayOrderedDesc(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?sort=orderfeature.desc&limit=100&offset=0&search=" + url.QueryEscape("search#text"))
+	err = testget(newUrl + "/hubs?sort=orderfeature.desc&limit=100&offset=0&search=" + url.QueryEscape("search#text"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -1216,7 +1216,7 @@ func TestSearchGatewayOrderedDefaultLimit(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?sort=orderfeature&offset=0&search=" + url.QueryEscape("search#text"))
+	err = testget(newUrl + "/hubs?sort=orderfeature&offset=0&search=" + url.QueryEscape("search#text"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -1236,7 +1236,7 @@ func TestSearchGatewayOrderedDefaultOffset(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?sort=orderfeature&limit=100&search=" + url.QueryEscape("search#text"))
+	err = testget(newUrl + "/hubs?sort=orderfeature&limit=100&search=" + url.QueryEscape("search#text"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -1256,7 +1256,7 @@ func TestSearchGatewayOrderedDefault(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = testget(newUrl + "/gateways?sort=orderfeature&search=" + url.QueryEscape("search#text"))
+	err = testget(newUrl + "/hubs?sort=orderfeature&search=" + url.QueryEscape("search#text"))
 	if err != nil {
 		t.Error(err)
 		return

@@ -48,6 +48,7 @@ type Interface interface {
 	CompleteDeviceHistory(jwt jwt_http_router.Jwt, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error)
 	CompleteGatewayHistory(jwt jwt_http_router.Jwt, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error)
 	ListAllGateways(jwt jwt_http_router.Jwt) (result []map[string]interface{}, err error)
+	GetGatewayDevices(jwt jwt_http_router.Jwt, id string) (ids []string, err error)
 }
 
 type Lib struct {

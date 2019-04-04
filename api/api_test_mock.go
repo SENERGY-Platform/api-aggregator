@@ -188,6 +188,11 @@ func (this *mock) ListAllGateways(jwt jwt_http_router.Jwt) (result []map[string]
 	return this.PermListAllGateways(jwt, "r")
 }
 
+func (this *mock) GetGatewayDevices(jwt jwt_http_router.Jwt, id string) (ids []string, err error) {
+	this.Log("GetGatewayDevices", jwt, id)
+	return []string{}, nil
+}
+
 func newMock() (oldApi string, newApi string, libForOld *mock, libForNew *mock, stop func()) {
 	libForNew, libForOld = &mock{}, &mock{}
 	newApiServer, oldApiServer := httptest.NewServer(getRoutes(libForNew)), httptest.NewServer(deprecated.GetRoutes(libForOld))

@@ -183,7 +183,7 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 				sort 	{string} 	sorts result by filed
 										name | name.asc | name.desc
 	*/
-	router.GET("/gateways", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+	router.GET("/hubs", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
 		limit := r.URL.Query().Get("limit")
 		offset := r.URL.Query().Get("offset")
 		logDuration := r.URL.Query().Get("log")
@@ -241,6 +241,42 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 			return
 		}
 		response.To(res).Json(result)
+	})
+
+	router.GET("/hubs/:id/devices", func(writer http.ResponseWriter, request *http.Request, params jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+		sort := request.URL.Query().Get("sort")
+		limit := request.URL.Query().Get("limit")
+		offset := request.URL.Query().Get("offset")
+		state := request.URL.Query().Get("state")
+
+		id := params.ByName("id")
+		idList, err := lib.GetGatewayDevices(jwt, id)
+		var result []map[string]interface{}
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if limit != "" || offset != "" || sort != "" {
+			limit, offset = limitOffsetDefault(limit, offset)
+			if sort == "" {
+				sort = "name"
+			}
+			orderfeature, direction := getSortParts(sort)
+			result, err = lib.CompleteDevicesOrdered(jwt, idList, limit, offset, orderfeature, direction)
+		} else {
+			result, err = lib.CompleteDevices(jwt, idList)
+		}
+
+		if state != "" {
+			result, err = lib.FilterDevicesByState(jwt, result, state)
+			if err != nil {
+				log.Println("ERROR: ", err)
+				http.Error(writer, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		response.To(writer).Json(result)
 	})
 
 	return
