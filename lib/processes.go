@@ -17,10 +17,14 @@
 package lib
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/SmartEnergyPlatform/jwt-http-router"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"net/url"
+	"runtime/debug"
 	"strings"
 )
 
@@ -61,8 +65,30 @@ func (this *Lib) GetExtendedProcessList(jwt jwt_http_router.Jwt, query url.Value
 }
 
 func (this *Lib) GetProcessDeploymentList(jwt jwt_http_router.Jwt, query url.Values) (result []map[string]interface{}, err error) {
-	err = jwt.Impersonate.GetJSON(this.config.CamundaWrapperUrl+"/deployment?"+query.Encode(), &result)
-	return
+	req, err := http.NewRequest("GET", this.config.CamundaWrapperUrl+"/deployment?"+query.Encode(), nil)
+	if err != nil {
+		debug.PrintStack()
+		return nil, err
+	}
+	req.Header.Set("Authorization", string(jwt.Impersonate))
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Println("ERROR: GetProcessDeploymentList()::http.DefaultClient.Do(req)", err)
+		debug.PrintStack()
+		return result, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		responseMsg, _ := ioutil.ReadAll(resp.Body)
+		log.Println("ERROR: GetProcessDeploymentList(): unexpected response", string(responseMsg))
+		debug.PrintStack()
+		return result, errors.New("unexpected response")
+	}
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		debug.PrintStack()
+	}
+	return result, err
 }
 
 func (this *Lib) GetProcessDependencyList(jwt jwt_http_router.Jwt, processIds []string) (result []Metadata, err error) {
