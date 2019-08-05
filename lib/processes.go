@@ -80,7 +80,7 @@ func (this *Lib) GetProcessDeploymentList(jwt jwt_http_router.Jwt, query url.Val
 	defer resp.Body.Close()
 	if resp.StatusCode >= 300 {
 		responseMsg, _ := ioutil.ReadAll(resp.Body)
-		log.Println("ERROR: GetProcessDeploymentList(): unexpected response", string(responseMsg))
+		log.Println("ERROR: GetProcessDeploymentList(): unexpected response", resp.StatusCode, string(responseMsg))
 		debug.PrintStack()
 		return result, errors.New("unexpected response")
 	}
