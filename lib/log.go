@@ -20,6 +20,34 @@ import (
 	"github.com/SmartEnergyPlatform/jwt-http-router"
 )
 
+func (this *Lib) SetOnlineState(jwt jwt_http_router.Jwt, dependencies []Dependencies) (result []Dependencies, err error) {
+	for _, dependency := range dependencies {
+		ids := []string{}
+		for _, device := range dependency.Devices {
+			ids = append(ids, device.DeviceId)
+		}
+		online, err := this.GetDeviceLogStates(jwt, ids)
+		if err != nil {
+			return result, err
+		}
+		dependency.Online = true
+		for index, device := range dependency.Devices {
+			device.Online = true
+			temp, ok := online[device.DeviceId]
+			if ok && !temp {
+				device.Online = false
+				dependency.Online = false
+			}
+			dependency.Devices[index] = device
+		}
+		result = append(result, dependency)
+	}
+
+	//TODO: evaluate events
+
+	return result, nil
+}
+
 func (this *Lib) GetDeviceLogStates(jwt jwt_http_router.Jwt, deviceIds []string) (result map[string]bool, err error) {
 	result = map[string]bool{}
 	err = jwt.Impersonate.PostJSON(this.config.ConnectionLogUrl+"/intern/state/device/check", deviceIds, &result)

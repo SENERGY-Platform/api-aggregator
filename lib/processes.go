@@ -43,9 +43,16 @@ func (this *Lib) GetExtendedProcessList(jwt jwt_http_router.Jwt, query url.Value
 		ids = append(ids, id)
 	}
 	metadata, err := this.GetProcessDependencyList(jwt, ids)
-	metadataIndex := map[string]Metadata{}
+	if err != nil {
+		return result, err
+	}
+	metadata, err = this.SetOnlineState(jwt, metadata)
+	if err != nil {
+		return result, err
+	}
+	metadataIndex := map[string]Dependencies{}
 	for _, m := range metadata {
-		metadataIndex[m.Process] = m
+		metadataIndex[m.DeploymentId] = m
 	}
 	for _, process := range processes {
 		id, ok := process["id"].(string)
@@ -91,83 +98,31 @@ func (this *Lib) GetProcessDeploymentList(jwt jwt_http_router.Jwt, query url.Val
 	return result, err
 }
 
-func (this *Lib) GetProcessDependencyList(jwt jwt_http_router.Jwt, processIds []string) (result []Metadata, err error) {
-	err = jwt.Impersonate.GetJSON(this.config.ProcessDeploymentUrl+"/dependencies?deployments="+strings.Join(processIds, ","), &result)
+func (this *Lib) GetProcessDependencyList(jwt jwt_http_router.Jwt, processIds []string) (result []Dependencies, err error) {
+	err = jwt.Impersonate.GetJSON(this.config.ProcessDeploymentUrl+"/dependencies?ids="+strings.Join(processIds, ","), &result)
 	return
 }
 
-func getOfflineReasons(metadata Metadata) (result []OfflineReason, err error) {
-	for _, param := range metadata.Abstract.AbstractTasks {
-		if param.State != "unknown" && param.State != "connected" {
+func getOfflineReasons(metadata Dependencies) (result []OfflineReason, err error) {
+	for _, device := range metadata.Devices {
+		if !device.Online {
 			result = append(result, OfflineReason{
 				Type:           "device-offline",
-				Id:             param.Selected.Id,
-				AdditionalInfo: map[string]interface{}{"name": param.Selected.Name, "tasks": param.Tasks},
-				Description:    "device " + param.Selected.Name + " is " + param.State,
+				Id:             device.DeviceId,
+				AdditionalInfo: map[string]interface{}{"name": device.Name, "tasks": device.BpmnResources},
+				Description:    "device " + device.Name + " is offline",
 			})
 		}
 	}
-	for _, event := range metadata.Abstract.MsgEvents {
-		if event.State != "running" {
+	for _, event := range metadata.Events {
+		if !event.Online {
 			result = append(result, OfflineReason{
 				Type:           "event-filter-offline",
-				Id:             event.FilterId,
-				AdditionalInfo: map[string]string{"shape_id": event.ShapeId},
-				Description:    "event-filter " + event.FilterId + " is " + event.State,
-			})
-		}
-	}
-	for _, event := range metadata.Abstract.ReceiveTasks {
-		if event.State != "running" {
-			result = append(result, OfflineReason{
-				Type:           "event-filter-offline",
-				Id:             event.FilterId,
-				AdditionalInfo: map[string]string{"shape_id": event.ShapeId},
-				Description:    "event-filter " + event.FilterId + " for shape " + event.ShapeId + " is " + event.State,
+				Id:             event.EventId,
+				AdditionalInfo: map[string]interface{}{"tasks": event.BpmnResources},
+				Description:    "event-filter " + event.EventId + " is offline",
 			})
 		}
 	}
 	return
-}
-
-type OfflineReason struct {
-	Type           string      `json:"type"`
-	Id             string      `json:"id"`
-	AdditionalInfo interface{} `json:"additional_info,omitempty"`
-	Description    string      `json:"description"`
-}
-
-type Metadata struct {
-	Process  string          `json:"process"`
-	Abstract AbstractProcess `json:"abstract"`
-	Online   bool            `json:"online"`
-	Owner    string          `json:"owner"`
-}
-
-type AbstractProcess struct {
-	AbstractTasks []AbstractTask `json:"abstract_tasks"`
-	ReceiveTasks  []MsgEvent     `json:"receive_tasks"`
-	MsgEvents     []MsgEvent     `json:"msg_events"`
-}
-
-type AbstractTask struct {
-	Selected DeviceInstance `json:"selected"`
-	State    string         `json:"state" bson:"-"`
-	Tasks    []Task         `json:"tasks"`
-}
-
-type Task struct {
-	Id    string `json:"id"`
-	Label string `json:"label"`
-}
-
-type MsgEvent struct {
-	FilterId string `json:"filter_id,omitempty"`
-	ShapeId  string `json:"shape_id"`
-	State    string `json:"state,omitempty" bson:"-"`
-}
-
-type DeviceInstance struct {
-	Id   string `json:"id,omitempty"`
-	Name string `json:"name,omitempty"`
 }
