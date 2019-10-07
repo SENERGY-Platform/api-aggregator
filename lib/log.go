@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 InfAI (CC SES)
+ * Copyright 2019 InfAI (CC SES)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,30 +21,70 @@ import (
 )
 
 func (this *Lib) SetOnlineState(jwt jwt_http_router.Jwt, dependencies []Dependencies) (result []Dependencies, err error) {
+
+	//create device id list
+	//use map to prevent duplicate ids
+	deviceidset := map[string]bool{}
+	deviceids := []string{}
 	for _, dependency := range dependencies {
-		ids := []string{}
 		for _, device := range dependency.Devices {
-			ids = append(ids, device.DeviceId)
+			deviceidset[device.DeviceId] = true
 		}
-		online, err := this.GetDeviceLogStates(jwt, ids)
-		if err != nil {
-			return result, err
+	}
+	for id, _ := range deviceidset {
+		deviceids = append(deviceids, id)
+	}
+
+	//create event id list
+	//use map to prevent duplicate ids
+	eventidset := map[string]bool{}
+	eventids := []string{}
+	for _, dependency := range dependencies {
+		for _, event := range dependency.Events {
+			eventidset[event.EventId] = true
 		}
+	}
+	for id, _ := range eventidset {
+		eventids = append(eventids, id)
+	}
+
+	//get device states
+	devicestates := map[string]bool{}
+	devicestates, err = this.GetDeviceLogStates(jwt, deviceids)
+	if err != nil {
+		return result, err
+	}
+
+	//get event states
+	eventstates := map[string]bool{}
+	eventstates, err = this.CheckEventStates(string(jwt.Impersonate), eventids)
+	if err != nil {
+		return result, err
+	}
+
+	//translate device states and event states to dependencies state
+	for _, dependency := range dependencies {
 		dependency.Online = true
 		for index, device := range dependency.Devices {
 			device.Online = true
-			temp, ok := online[device.DeviceId]
+			temp, ok := devicestates[device.DeviceId]
 			if ok && !temp {
 				device.Online = false
 				dependency.Online = false
 			}
 			dependency.Devices[index] = device
 		}
+		for index, event := range dependency.Events {
+			event.Online = true
+			temp, ok := eventstates[event.EventId]
+			if ok && !temp {
+				event.Online = false
+				dependency.Online = false
+			}
+			dependency.Events[index] = event
+		}
 		result = append(result, dependency)
 	}
-
-	//TODO: evaluate events
-
 	return result, nil
 }
 
