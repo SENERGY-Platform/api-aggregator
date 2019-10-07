@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 InfAI (CC SES)
+ * Copyright 2019 InfAI (CC SES)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,18 +28,19 @@ import (
 )
 
 type Config struct {
-	ServerPort string
-	LogLevel   string
+	ServerPort string `json:"server_port"`
+	LogLevel   string `json:"log_level"`
 
-	IotUrl           string
-	ConnectionLogUrl string
-	PermissionsUrl   string
+	IotUrl           string `json:"iot_url"`
+	ConnectionLogUrl string `json:"connection_log_url"`
+	PermissionsUrl   string `json:"permissions_url"`
 
-	CamundaWrapperUrl    string
-	ProcessDeploymentUrl string
+	CamundaWrapperUrl    string `json:"camunda_wrapper_url"`
+	ProcessDeploymentUrl string `json:"process_deployment_url"`
+	EventManagerUrl      string `json:"event_manager_url"`
 
-	ForceUser string
-	ForceAuth string
+	ForceUser bool `json:"force_user"`
+	ForceAuth bool `json:"force_auth"`
 }
 
 func LoadConfig(location string) (config Config, err error) {
