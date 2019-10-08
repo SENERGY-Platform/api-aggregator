@@ -20,6 +20,7 @@ import (
 	"errors"
 	"github.com/SmartEnergyPlatform/jwt-http-router"
 	"log"
+	"runtime/debug"
 	"sort"
 )
 
@@ -164,12 +165,20 @@ func (this *Lib) completeDeviceList(jwt jwt_http_router.Jwt, devices []map[strin
 			return result, err
 		}
 	*/
+	deviceTypes, err := this.getDeviceDeviceTypeInfos(jwt, devices)
+	if err != nil {
+		return result, err
+	}
+
 	for _, id := range ids {
 		device := deviceMap[id]
 		logState, logExists := logStates[id]
 		if logExists {
 			device["log_state"] = logState
 		}
+
+		device["device_type"] = deviceTypes[id]
+
 		//device["gateway_name"] = gateways[id]
 		result = append(result, device)
 	}
@@ -233,6 +242,85 @@ func (this *Lib) CompleteDeviceHistory(jwt jwt_http_router.Jwt, duration string,
 		device["log_history"] = logHistory[id]
 		device["log_edge"] = logEdges[id]
 		result = append(result, device)
+	}
+	return
+}
+
+func (this *Lib) getDeviceDeviceTypeInfos(jwt jwt_http_router.Jwt, devices []map[string]interface{}) (deviceToDeviceType map[string]map[string]interface{}, err error) {
+	deviceToDeviceType = map[string]map[string]interface{}{}
+
+	//ensure no device type id duplicates
+	dtIdSet := map[string]bool{}
+	for _, device := range devices {
+		dtIdInterface, dtIdExists := device["device_type_id"]
+		if !dtIdExists {
+			log.Println("WARNING: unable to find device type id field in device")
+			continue
+		}
+
+		dtId, dtIdIsString := dtIdInterface.(string)
+		if !dtIdIsString {
+			log.Println("WARNING: device type id field is not string in device")
+			continue
+		}
+		dtIdSet[dtId] = true
+	}
+	ids := []string{}
+	for id, _ := range dtIdSet {
+		ids = append(ids, id)
+	}
+
+	//get device types
+	deviceTypes, err := this.PermSelectDeviceTypesByIdRead(jwt, ids)
+	if err != nil {
+		log.Println("ERROR:", err)
+		debug.PrintStack()
+		return deviceToDeviceType, err
+	}
+
+	//index device types by its own id
+	dtIndex := map[string]map[string]interface{}{}
+	for _, deviceType := range deviceTypes {
+		idInterface, idExists := deviceType["id"]
+		if !idExists {
+			log.Println("WARNING: unable to find device type id field")
+			continue
+		}
+
+		id, idIsString := idInterface.(string)
+		if !idIsString {
+			log.Println("WARNING: device type id field is not string")
+		}
+		delete(deviceType, "permissions") //permissions is not needed
+
+		dtIndex[id] = deviceType
+	}
+
+	//result: index device types by device id
+	for _, device := range devices {
+		idInterface, idExists := device["id"]
+		if !idExists {
+			log.Println("WARNING: unable to find device id field")
+			continue
+		}
+
+		id, idIsString := idInterface.(string)
+		if !idIsString {
+			log.Println("WARNING: device id field is not string")
+		}
+
+		dtIdInterface, dtIdExists := device["device_type_id"]
+		if !dtIdExists {
+			log.Println("WARNING: unable to find device type id field in device")
+			continue
+		}
+
+		dtId, dtIdIsString := dtIdInterface.(string)
+		if !dtIdIsString {
+			log.Println("WARNING: device type id field is not string in device")
+			continue
+		}
+		deviceToDeviceType[id] = dtIndex[dtId]
 	}
 	return
 }

@@ -17,6 +17,7 @@
 package lib
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"github.com/SmartEnergyPlatform/jwt-http-router"
@@ -173,6 +174,28 @@ func (this *Lib) PermSelectOrdered(jwt jwt_http_router.Jwt, kind string, field s
 	}
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	return
+}
+
+func (this *Lib) PermSelectIds(jwt jwt_http_router.Jwt, kind string, right string, ids []string) (result []map[string]interface{}, err error) {
+	b := new(bytes.Buffer)
+	err = json.NewEncoder(b).Encode(ids)
+	if err != nil {
+		return
+	}
+	resp, err := jwt.Impersonate.Post(this.config.PermissionsUrl+"/ids/select/"+url.PathEscape(kind)+"/"+right, "application/json", b)
+	if err != nil {
+		return result, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		err = errors.New("access denied")
+		return result, err
+	}
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	return
+}
+
+func (this *Lib) PermSelectDeviceTypesByIdRead(jwt jwt_http_router.Jwt, ids []string) (result []map[string]interface{}, err error) {
+	return this.PermSelectIds(jwt, "device-types", "r", ids)
 }
 
 func (this *Lib) PermCheckDeviceAdmin(jwt jwt_http_router.Jwt, ids []string) (result map[string]bool, err error) {
