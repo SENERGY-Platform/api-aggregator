@@ -178,6 +178,7 @@ func (this *Lib) completeDeviceList(jwt jwt_http_router.Jwt, devices []map[strin
 		}
 
 		device["device_type"] = deviceTypes[id]
+		delete(device, "device_type_id") //device_type_id is not needed
 
 		//device["gateway_name"] = gateways[id]
 		result = append(result, device)
@@ -291,8 +292,6 @@ func (this *Lib) getDeviceDeviceTypeInfos(jwt jwt_http_router.Jwt, devices []map
 		if !idIsString {
 			log.Println("WARNING: device type id field is not string")
 		}
-		delete(deviceType, "permissions") //permissions is not needed
-
 		dtIndex[id] = deviceType
 	}
 
