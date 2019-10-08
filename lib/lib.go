@@ -23,10 +23,8 @@ import (
 
 type Interface interface {
 	Config() Config
-	ListDevicesByUserTag(jwt jwt_http_router.Jwt, value string) (result []map[string]interface{}, err error)
 	FilterDevicesByState(jwt jwt_http_router.Jwt, devices []map[string]interface{}, state string) (result []map[string]interface{}, err error)
 	SortByName(input []map[string]interface{}, sortAsc bool) (output []map[string]interface{})
-	ListDevicesByTag(jwt jwt_http_router.Jwt, value string) (result []map[string]interface{}, err error)
 	GetConnectionFilteredDevicesOrder(jwt jwt_http_router.Jwt, value string, sortAsc bool) (result []map[string]interface{}, err error)
 	GetConnectionFilteredDevices(jwt jwt_http_router.Jwt, value string) (result []map[string]interface{}, err error)
 	ListAllDevices(jwt jwt_http_router.Jwt) (result []map[string]interface{}, err error)
@@ -34,8 +32,6 @@ type Interface interface {
 	SearchDevices(jwt jwt_http_router.Jwt, query string, limit string, offset string) (result []map[string]interface{}, err error)
 	ListDevicesOrdered(jwt jwt_http_router.Jwt, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error)
 	SearchDevicesOrdered(jwt jwt_http_router.Jwt, query string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error)
-	ListOrderdDevicesByTag(jwt jwt_http_router.Jwt, value string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error)
-	ListOrderedDevicesByUserTag(jwt jwt_http_router.Jwt, value string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error)
 	CompleteDevices(jwt jwt_http_router.Jwt, ids []string) (result []map[string]interface{}, err error)
 	CompleteDevicesOrdered(jwt jwt_http_router.Jwt, ids []string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error)
 	GetDevicesHistory(jwt jwt_http_router.Jwt, duration string) (result []map[string]interface{}, err error)

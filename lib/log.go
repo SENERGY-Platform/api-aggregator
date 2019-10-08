@@ -18,6 +18,7 @@ package lib
 
 import (
 	"github.com/SmartEnergyPlatform/jwt-http-router"
+	"log"
 )
 
 func (this *Lib) SetOnlineState(jwt jwt_http_router.Jwt, dependencies []Dependencies) (result []Dependencies, err error) {
@@ -90,17 +91,33 @@ func (this *Lib) SetOnlineState(jwt jwt_http_router.Jwt, dependencies []Dependen
 
 func (this *Lib) GetDeviceLogStates(jwt jwt_http_router.Jwt, deviceIds []string) (result map[string]bool, err error) {
 	result = map[string]bool{}
+	if this.Config().ConnectionLogUrl == "" || this.Config().ConnectionLogUrl == "-" {
+		log.Println("WARNING: no connectionlog url configured")
+		return
+	}
 	err = jwt.Impersonate.PostJSON(this.config.ConnectionLogUrl+"/intern/state/device/check", deviceIds, &result)
 	return
 }
 
 func (this *Lib) GetGatewayLogStates(jwt jwt_http_router.Jwt, deviceIds []string) (result map[string]bool, err error) {
 	result = map[string]bool{}
+	if this.Config().ConnectionLogUrl == "" || this.Config().ConnectionLogUrl == "-" {
+		log.Println("WARNING: no connectionlog url configured")
+		for _, id := range deviceIds {
+			result[id] = true
+		}
+		return
+	}
 	err = jwt.Impersonate.PostJSON(this.config.ConnectionLogUrl+"/intern/state/gateway/check", deviceIds, &result)
 	return
 }
 
 func (this *Lib) GetDeviceLogHistory(jwt jwt_http_router.Jwt, deviceIds []string, duration string) (result map[string]HistorySeries, err error) {
+	if this.Config().ConnectionLogUrl == "" || this.Config().ConnectionLogUrl == "-" {
+		log.Println("WARNING: no connectionlog url configured")
+		result = map[string]HistorySeries{}
+		return
+	}
 	return this.GetLogHistory(jwt, "device", deviceIds, duration)
 }
 
@@ -121,6 +138,10 @@ type HistorySeries struct {
 
 func (this *Lib) GetLogHistory(jwt jwt_http_router.Jwt, kind string, ids []string, duration string) (result map[string]HistorySeries, err error) {
 	result = map[string]HistorySeries{}
+	if this.Config().ConnectionLogUrl == "" || this.Config().ConnectionLogUrl == "-" {
+		log.Println("WARNING: no connectionlog url configured")
+		return
+	}
 	temp := []HistoryResult{}
 	err = jwt.Impersonate.PostJSON(this.config.ConnectionLogUrl+"/intern/history/"+kind+"/"+duration, ids, &temp)
 	if err != nil {
@@ -134,12 +155,20 @@ func (this *Lib) GetLogHistory(jwt jwt_http_router.Jwt, kind string, ids []strin
 
 func (this *Lib) GetLogstarts(jwt jwt_http_router.Jwt, kind string, ids []string) (result map[string]interface{}, err error) {
 	result = map[string]interface{}{}
+	if this.Config().ConnectionLogUrl == "" || this.Config().ConnectionLogUrl == "-" {
+		log.Println("WARNING: no connectionlog url configured")
+		return
+	}
 	err = jwt.Impersonate.PostJSON(this.config.ConnectionLogUrl+"/intern/logstarts/"+kind, ids, &result)
 	return
 }
 
 func (this *Lib) GetLogedges(jwt jwt_http_router.Jwt, kind string, ids []string, duration string) (result map[string]interface{}, err error) {
 	result = map[string]interface{}{}
+	if this.Config().ConnectionLogUrl == "" || this.Config().ConnectionLogUrl == "-" {
+		log.Println("WARNING: no connectionlog url configured")
+		return
+	}
 	err = jwt.Impersonate.PostJSON(this.config.ConnectionLogUrl+"/intern/logedge/"+kind+"/"+duration, ids, &result)
 	return
 }

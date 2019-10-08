@@ -25,27 +25,27 @@ import (
 )
 
 func (this *Lib) PermListGateways(jwt jwt_http_router.Jwt, right string, limit string, offset string) (result []map[string]interface{}, err error) {
-	return this.PermList(jwt, "gateway", right, limit, offset)
+	return this.PermList(jwt, "hubs", right, limit, offset)
 }
 
 func (this *Lib) PermListGatewaysOrdered(jwt jwt_http_router.Jwt, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return this.PermListOrdered(jwt, "gateway", right, limit, offset, orderfeature, direction)
+	return this.PermListOrdered(jwt, "hubs", right, limit, offset, orderfeature, direction)
 }
 
 func (this *Lib) PermSearchGateways(jwt jwt_http_router.Jwt, query string, right string, limit string, offset string) (result []map[string]interface{}, err error) {
-	return this.PermSearch(jwt, "gateway", query, right, limit, offset)
+	return this.PermSearch(jwt, "hubs", query, right, limit, offset)
 }
 
 func (this *Lib) PermSearchGatewaysOrdered(jwt jwt_http_router.Jwt, query string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return this.PermSearchOrdered(jwt, "gateway", query, right, limit, offset, orderfeature, direction)
+	return this.PermSearchOrdered(jwt, "hubs", query, right, limit, offset, orderfeature, direction)
 }
 
 func (this *Lib) PermDeviceIdList(jwt jwt_http_router.Jwt, ids []string, right string) (result []map[string]interface{}, err error) {
-	return this.PermIdList(jwt, "deviceinstance", ids, right)
+	return this.PermIdList(jwt, "devices", ids, right)
 }
 
 func (this *Lib) PermDeviceIdListOrdered(jwt jwt_http_router.Jwt, ids []string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return this.PermIdListOrdered(jwt, "deviceinstance", ids, right, limit, offset, orderfeature, direction)
+	return this.PermIdListOrdered(jwt, "devices", ids, right, limit, offset, orderfeature, direction)
 }
 
 func (this *Lib) PermIdList(jwt jwt_http_router.Jwt, kind string, ids []string, right string) (result []map[string]interface{}, err error) {
@@ -59,19 +59,19 @@ func (this *Lib) PermIdListOrdered(jwt jwt_http_router.Jwt, kind string, ids []s
 }
 
 func (this *Lib) PermListDevices(jwt jwt_http_router.Jwt, right string, limit string, offset string) (result []map[string]interface{}, err error) {
-	return this.PermList(jwt, "deviceinstance", right, limit, offset)
+	return this.PermList(jwt, "devices", right, limit, offset)
 }
 
 func (this *Lib) PermListDevicesOrdered(jwt jwt_http_router.Jwt, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return this.PermListOrdered(jwt, "deviceinstance", right, limit, offset, orderfeature, direction)
+	return this.PermListOrdered(jwt, "devices", right, limit, offset, orderfeature, direction)
 }
 
 func (this *Lib) PermListAllDevices(jwt jwt_http_router.Jwt, right string) (result []map[string]interface{}, err error) {
-	return this.PermListAll(jwt, "deviceinstance", right)
+	return this.PermListAll(jwt, "devices", right)
 }
 
 func (this *Lib) PermListAllGateways(jwt jwt_http_router.Jwt, right string) (result []map[string]interface{}, err error) {
-	return this.PermListAll(jwt, "gateway", right)
+	return this.PermListAll(jwt, "hubs", right)
 }
 
 func (this *Lib) PermListAll(jwt jwt_http_router.Jwt, kind string, right string) (result []map[string]interface{}, err error) {
@@ -115,11 +115,11 @@ func (this *Lib) PermListOrdered(jwt jwt_http_router.Jwt, kind string, right str
 }
 
 func (this *Lib) PermSearchDevices(jwt jwt_http_router.Jwt, query string, right string, limit string, offset string) (result []map[string]interface{}, err error) {
-	return this.PermSearch(jwt, "deviceinstance", query, right, limit, offset)
+	return this.PermSearch(jwt, "devices", query, right, limit, offset)
 }
 
 func (this *Lib) PermSearchDevicesOrdered(jwt jwt_http_router.Jwt, query string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return this.PermSearchOrdered(jwt, "deviceinstance", query, right, limit, offset, orderfeature, direction)
+	return this.PermSearchOrdered(jwt, "devices", query, right, limit, offset, orderfeature, direction)
 }
 
 func (this *Lib) PermSearch(jwt jwt_http_router.Jwt, kind string, query string, right string, limit string, offset string) (result []map[string]interface{}, err error) {
@@ -149,22 +149,6 @@ func (this *Lib) PermSearchOrdered(jwt jwt_http_router.Jwt, kind string, query s
 	return
 }
 
-func (this *Lib) PermSelectUserTagDevices(jwt jwt_http_router.Jwt, value string, right string) (result []map[string]interface{}, err error) {
-	return this.PermSelect(jwt, "deviceinstance", "usertag", value, right)
-}
-
-func (this *Lib) PermSelectUserTagDevicesOrdered(jwt jwt_http_router.Jwt, value string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return this.PermSelectOrdered(jwt, "deviceinstance", "usertag", value, right, limit, offset, orderfeature, direction)
-}
-
-func (this *Lib) PermSelectTagDevices(jwt jwt_http_router.Jwt, value string, right string) (result []map[string]interface{}, err error) {
-	return this.PermSelect(jwt, "deviceinstance", "tag", value, right)
-}
-
-func (this *Lib) PermSelectTagDevicesOrdered(jwt jwt_http_router.Jwt, value string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return this.PermSelectOrdered(jwt, "deviceinstance", "tag", value, right, limit, offset, orderfeature, direction)
-}
-
 func (this *Lib) PermSelect(jwt jwt_http_router.Jwt, kind string, field string, value string, right string) (result []map[string]interface{}, err error) {
 	resp, err := jwt.Impersonate.Get(this.config.PermissionsUrl + "/jwt/select/" + url.PathEscape(kind) + "/" + url.PathEscape(field) + "/" + url.PathEscape(value) + "/" + right)
 	if err != nil {
@@ -192,11 +176,11 @@ func (this *Lib) PermSelectOrdered(jwt jwt_http_router.Jwt, kind string, field s
 }
 
 func (this *Lib) PermCheckDeviceAdmin(jwt jwt_http_router.Jwt, ids []string) (result map[string]bool, err error) {
-	return this.PermCheck(jwt, "deviceinstance", ids, "a")
+	return this.PermCheck(jwt, "devices", ids, "a")
 }
 
 func (this *Lib) PermCheckDeviceRead(jwt jwt_http_router.Jwt, ids []string) (result map[string]bool, err error) {
-	return this.PermCheck(jwt, "deviceinstance", ids, "r")
+	return this.PermCheck(jwt, "devices", ids, "r")
 }
 
 func (this *Lib) PermCheck(jwt jwt_http_router.Jwt, kind string, ids []string, right string) (result map[string]bool, err error) {

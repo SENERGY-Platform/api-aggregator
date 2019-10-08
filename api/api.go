@@ -37,8 +37,8 @@ func Start(lib lib.Interface) {
 
 func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 	router = jwt_http_router.New(jwt_http_router.JwtConfig{
-		ForceUser: lib.Config().ForceUser == "true",
-		ForceAuth: lib.Config().ForceAuth == "true",
+		ForceUser: lib.Config().ForceUser,
+		ForceAuth: lib.Config().ForceAuth,
 	})
 
 	/*
@@ -57,8 +57,6 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 				offset 	{int}		may default to 0; no effect when used with usertag and tag
 	*/
 	router.GET("/devices", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
-		usertag := r.URL.Query().Get("usertag")
-		tag := r.URL.Query().Get("tag")
 		state := r.URL.Query().Get("state")
 		sort := r.URL.Query().Get("sort")
 		limit := r.URL.Query().Get("limit")
@@ -83,30 +81,6 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 				result, err = lib.CompleteDevicesOrdered(jwt, idList, limit, offset, orderfeature, direction)
 			} else {
 				result, err = lib.CompleteDevices(jwt, idList)
-			}
-		case usertag != "":
-			if limit != "" || offset != "" {
-				limit, offset = limitOffsetDefault(limit, offset)
-				if sort == "" {
-					sort = "name"
-				}
-				orderfeature, direction := getSortParts(sort)
-				sorted = true
-				result, err = lib.ListOrderedDevicesByUserTag(jwt, usertag, limit, offset, orderfeature, direction)
-			} else {
-				result, err = lib.ListDevicesByUserTag(jwt, usertag)
-			}
-		case tag != "":
-			if limit != "" || offset != "" {
-				limit, offset = limitOffsetDefault(limit, offset)
-				if sort == "" {
-					sort = "name"
-				}
-				orderfeature, direction := getSortParts(sort)
-				sorted = true
-				result, err = lib.ListOrderdDevicesByTag(jwt, tag, limit, offset, orderfeature, direction)
-			} else {
-				result, err = lib.ListDevicesByTag(jwt, tag)
 			}
 		case search != "":
 			limit, offset = limitOffsetDefault(limit, offset)

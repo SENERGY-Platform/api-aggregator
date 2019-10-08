@@ -119,38 +119,6 @@ func (this *Lib) SearchDevicesOrdered(jwt jwt_http_router.Jwt, query string, lim
 	return this.completeDeviceList(jwt, devices)
 }
 
-func (this *Lib) ListDevicesByTag(jwt jwt_http_router.Jwt, value string) (result []map[string]interface{}, err error) {
-	devices, err := this.PermSelectTagDevices(jwt, value, "r")
-	if err != nil {
-		return result, err
-	}
-	return this.completeDeviceList(jwt, devices)
-}
-
-func (this *Lib) ListOrderdDevicesByTag(jwt jwt_http_router.Jwt, value string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	devices, err := this.PermSelectTagDevicesOrdered(jwt, value, "r", limit, offset, orderfeature, direction)
-	if err != nil {
-		return result, err
-	}
-	return this.completeDeviceList(jwt, devices)
-}
-
-func (this *Lib) ListDevicesByUserTag(jwt jwt_http_router.Jwt, value string) (result []map[string]interface{}, err error) {
-	devices, err := this.PermSelectUserTagDevices(jwt, value, "r")
-	if err != nil {
-		return result, err
-	}
-	return this.completeDeviceList(jwt, devices)
-}
-
-func (this *Lib) ListOrderedDevicesByUserTag(jwt jwt_http_router.Jwt, value string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	devices, err := this.PermSelectUserTagDevicesOrdered(jwt, value, "r", limit, offset, orderfeature, direction)
-	if err != nil {
-		return result, err
-	}
-	return this.completeDeviceList(jwt, devices)
-}
-
 func (this *Lib) CompleteDevices(jwt jwt_http_router.Jwt, ids []string) (result []map[string]interface{}, err error) {
 	devices, err := this.PermDeviceIdList(jwt, ids, "r")
 	if err != nil {

@@ -72,6 +72,10 @@ func (this *Lib) GetExtendedProcessList(jwt jwt_http_router.Jwt, query url.Value
 }
 
 func (this *Lib) GetProcessDeploymentList(jwt jwt_http_router.Jwt, query url.Values) (result []map[string]interface{}, err error) {
+	if this.Config().CamundaWrapperUrl == "" || this.Config().CamundaWrapperUrl == "-" {
+		log.Println("WARNING: no CamundaWrapperUrl url configured")
+		return
+	}
 	req, err := http.NewRequest("GET", this.config.CamundaWrapperUrl+"/deployment?"+query.Encode(), nil)
 	if err != nil {
 		debug.PrintStack()
@@ -99,6 +103,10 @@ func (this *Lib) GetProcessDeploymentList(jwt jwt_http_router.Jwt, query url.Val
 }
 
 func (this *Lib) GetProcessDependencyList(jwt jwt_http_router.Jwt, processIds []string) (result []Dependencies, err error) {
+	if this.Config().ProcessDeploymentUrl == "" || this.Config().ProcessDeploymentUrl == "-" {
+		log.Println("WARNING: no ProcessDeploymentUrl url configured")
+		return
+	}
 	err = jwt.Impersonate.GetJSON(this.config.ProcessDeploymentUrl+"/dependencies?ids="+strings.Join(processIds, ","), &result)
 	return
 }
