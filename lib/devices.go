@@ -323,3 +323,16 @@ func (this *Lib) getDeviceDeviceTypeInfos(jwt jwt_http_router.Jwt, devices []map
 	}
 	return
 }
+
+func (this *Lib) GetDeviceTypeDevices(jwt jwt_http_router.Jwt, id string, limit string, offset string, orderFeature string, direction string) (ids []string, err error) {
+	type device struct {
+		Id string `json:"id"`
+	}
+	var devices []device
+	err = jwt.Impersonate.GetJSON(this.config.PermissionsUrl+"/jwt/select/devices/device_type_id/"+id+"/r/"+limit+"/"+offset+"/"+orderFeature+"/"+direction, &devices)
+
+	for _, d := range devices {
+		ids = append(ids, d.Id)
+	}
+	return
+}

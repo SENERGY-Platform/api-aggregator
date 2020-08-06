@@ -17,6 +17,7 @@
 package api
 
 import (
+	"encoding/json"
 	"github.com/SmartEnergyPlatform/api-aggregator/lib"
 	"github.com/SmartEnergyPlatform/jwt-http-router"
 	"github.com/SmartEnergyPlatform/util/http/cors"
@@ -249,6 +250,90 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 				return
 			}
 		}
+
+		response.To(writer).Json(result)
+	})
+
+	router.GET("/device-types/:id/devices", func(writer http.ResponseWriter, request *http.Request, params jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+		sort := request.URL.Query().Get("sort")
+		limit := request.URL.Query().Get("limit")
+		offset := request.URL.Query().Get("offset")
+		state := request.URL.Query().Get("state")
+
+		id := params.ByName("id")
+		limit, offset = limitOffsetDefault(limit, offset)
+
+		if sort == "" {
+			sort = "name"
+		}
+		orderfeature, direction := getSortParts(sort)
+
+		idList, err := lib.GetDeviceTypeDevices(jwt, id, limit, offset, orderfeature, direction)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		result, err := lib.CompleteDevices(jwt, idList)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if state != "" {
+			result, err = lib.FilterDevicesByState(jwt, result, state)
+			if err != nil {
+				log.Println("ERROR: ", err)
+				http.Error(writer, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		response.To(writer).Json(result)
+	})
+
+	router.POST("/device-types-devices", func(writer http.ResponseWriter, request *http.Request, params jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+		state := request.URL.Query().Get("state")
+		direction := request.URL.Query().Get("direction")
+		orderfeature, direction := getSortParts("name.asc")
+
+		type deviceTypesDevicesBody struct {
+			Ids []string `json:"ids"`
+		}
+		var body deviceTypesDevicesBody
+		err := json.NewDecoder(request.Body).Decode(&body)
+		if err != nil {
+			http.Error(writer, "unable to parse request body: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		idList := []string{}
+		for _, id := range body.Ids {
+			deviceIds, err := lib.GetDeviceTypeDevices(jwt, id, "-1", "-1", orderfeature, direction)
+
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			idList = append(idList, deviceIds...)
+		}
+
+		result, err := lib.CompleteDevices(jwt, idList)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if state != "" {
+			result, err = lib.FilterDevicesByState(jwt, result, state)
+			if err != nil {
+				log.Println("ERROR: ", err)
+				http.Error(writer, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		result = lib.SortByName(result, true)
 
 		response.To(writer).Json(result)
 	})
