@@ -178,7 +178,7 @@ func (this *Lib) completeDeviceList(jwt jwt_http_router.Jwt, devices []map[strin
 		}
 
 		device["device_type"] = deviceTypes[id]
-		delete(device, "device_type_id") //device_type_id is not needed
+		// delete(device, "device_type_id") //device_type_id is not needed
 
 		//device["gateway_name"] = gateways[id]
 		result = append(result, device)
