@@ -67,19 +67,15 @@ func (this *Lib) SetOnlineState(jwt jwt_http_router.Jwt, dependencies []Dependen
 	for _, dependency := range dependencies {
 		dependency.Online = true
 		for index, device := range dependency.Devices {
-			device.Online = true
-			temp, ok := devicestates[device.DeviceId]
-			if ok && !temp {
-				device.Online = false
+			device.Online = devicestates[device.DeviceId]
+			if !device.Online {
 				dependency.Online = false
 			}
 			dependency.Devices[index] = device
 		}
 		for index, event := range dependency.Events {
-			event.Online = true
-			temp, ok := eventstates[event.EventId]
-			if ok && !temp {
-				event.Online = false
+			event.Online = eventstates[event.EventId]
+			if event.Online {
 				dependency.Online = false
 			}
 			dependency.Events[index] = event

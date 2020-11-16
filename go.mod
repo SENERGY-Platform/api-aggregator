@@ -1,6 +1,6 @@
 module github.com/SmartEnergyPlatform/api-aggregator
 
-go 1.13
+go 1.15
 
 require (
 	github.com/SmartEnergyPlatform/jwt-http-router v0.0.0-20190318131115-1c2a98f99363
