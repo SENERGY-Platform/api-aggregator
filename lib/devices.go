@@ -24,16 +24,66 @@ import (
 	"sort"
 )
 
-func (this *Lib) GetConnectionFilteredDevicesOrder(jwt jwt_http_router.Jwt, value string, sortAsc bool) (result []map[string]interface{}, err error) {
-	result, err = this.GetConnectionFilteredDevices(jwt, value)
-	if err != nil {
-		log.Println("ERROR GetConnectionFilteredDevices", err)
-		return result, err
+func (this *Lib) FindDevices(jwt jwt_http_router.Jwt, search string, deviceIds []string, limit int, offset int, orderfeature string, direction string, location string) (devices []map[string]interface{}, err error) {
+	var listIds *QueryListIds
+	var find *QueryFind
+
+	filterById := len(deviceIds) > 0 || location != ""
+
+	queryCommons := QueryListCommons{
+		Limit:    limit,
+		Offset:   offset,
+		Rights:   "r",
+		SortBy:   orderfeature,
+		SortDesc: direction == "desc",
+	}
+	filteredIds := []string{}
+	if location != "" {
+		locationDevices, err := this.GetDevicesInLocation(jwt, location)
+		if err != nil {
+			return nil, err
+		}
+		if len(deviceIds) == 0 {
+			filteredIds = locationDevices
+		} else {
+			filteredIds = intersection(deviceIds, locationDevices)
+		}
 	}
 
-	result = this.SortByName(result, sortAsc)
+	if search == "" && filterById {
+		listIds = &QueryListIds{
+			QueryListCommons: queryCommons,
+			Ids:              filteredIds,
+		}
+	} else {
+		var filter *Selection
+		if filterById {
+			filter = &Selection{
+				Condition: ConditionConfig{
+					Feature:   "id",
+					Operation: QueryAnyValueInFeatureOperation,
+					Value:     filteredIds,
+				},
+			}
+		}
+		find = &QueryFind{
+			QueryListCommons: queryCommons,
+			Search:           search,
+			Filter:           filter,
+		}
+	}
 
-	return
+	query := QueryMessage{
+		Resource: "devices",
+		Find:     find,
+		ListIds:  listIds,
+	}
+
+	err, _ = this.QueryPermissionsSearch(string(jwt.Impersonate), query, &devices)
+	if err != nil {
+		return nil, err
+	}
+	return this.completeDeviceList(jwt, devices)
 }
 
 func (this *Lib) SortByName(input []map[string]interface{}, sortAsc bool) (output []map[string]interface{}) {
@@ -45,23 +95,23 @@ func (this *Lib) SortByName(input []map[string]interface{}, sortAsc bool) (outpu
 	} else {
 		sort.Slice(output, func(i, j int) bool {
 			return output[i]["name"].(string) > output[j]["name"].(string)
-
 		})
 	}
 	return
 }
 
-func (this *Lib) GetConnectionFilteredDevices(jwt jwt_http_router.Jwt, value string) (result []map[string]interface{}, err error) {
-	devices, err := this.PermListAllDevices(jwt, "r")
-	if err != nil {
-		log.Println("ERROR GetConnectionFilteredDevices.PermListAllDevices()", err)
-		return result, err
+func intersection(a []string, b []string) (result []string) {
+	result = []string{}
+	aIndex := map[string]bool{}
+	for _, element := range a {
+		aIndex[element] = true
 	}
-	return this.FilterDevicesByState(jwt, devices, value)
-}
-
-func (this *Lib) ListAllDevices(jwt jwt_http_router.Jwt) (result []map[string]interface{}, err error) {
-	return this.PermListAllDevices(jwt, "r")
+	for _, element := range b {
+		if aIndex[element] {
+			result = append(result, element)
+		}
+	}
+	return result
 }
 
 func (this *Lib) FilterDevicesByState(jwt jwt_http_router.Jwt, devices []map[string]interface{}, state string) (result []map[string]interface{}, err error) {
@@ -84,40 +134,6 @@ func (this *Lib) FilterDevicesByState(jwt jwt_http_router.Jwt, devices []map[str
 		}
 	}
 	return
-}
-
-func (this *Lib) ListDevices(jwt jwt_http_router.Jwt, limit string, offset string) (result []map[string]interface{}, err error) {
-	devices, err := this.PermListDevices(jwt, "r", limit, offset)
-	if err != nil {
-		log.Println("ERROR ListDevices.PermListDevices()", err)
-		return result, err
-	}
-	return this.completeDeviceList(jwt, devices)
-}
-
-func (this *Lib) ListDevicesOrdered(jwt jwt_http_router.Jwt, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	devices, err := this.PermListDevicesOrdered(jwt, "r", limit, offset, orderfeature, direction)
-	if err != nil {
-		log.Println("ERROR ListDevices.PermListDevices()", err)
-		return result, err
-	}
-	return this.completeDeviceList(jwt, devices)
-}
-
-func (this *Lib) SearchDevices(jwt jwt_http_router.Jwt, query string, limit string, offset string) (result []map[string]interface{}, err error) {
-	devices, err := this.PermSearchDevices(jwt, query, "r", limit, offset)
-	if err != nil {
-		return result, err
-	}
-	return this.completeDeviceList(jwt, devices)
-}
-
-func (this *Lib) SearchDevicesOrdered(jwt jwt_http_router.Jwt, query string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	devices, err := this.PermSearchDevicesOrdered(jwt, query, "r", limit, offset, orderfeature, direction)
-	if err != nil {
-		return result, err
-	}
-	return this.completeDeviceList(jwt, devices)
 }
 
 func (this *Lib) CompleteDevices(jwt jwt_http_router.Jwt, ids []string) (result []map[string]interface{}, err error) {
@@ -183,16 +199,6 @@ func (this *Lib) completeDeviceList(jwt jwt_http_router.Jwt, devices []map[strin
 		//device["gateway_name"] = gateways[id]
 		result = append(result, device)
 	}
-	return
-}
-
-func (this *Lib) GetDevicesHistory(jwt jwt_http_router.Jwt, duration string) (result []map[string]interface{}, err error) {
-	result, err = this.PermListAllDevices(jwt, "r")
-	if err != nil {
-		log.Println("ERROR PermListAllDevices()", err)
-		return result, err
-	}
-	result, err = this.CompleteDeviceHistory(jwt, duration, result)
 	return
 }
 

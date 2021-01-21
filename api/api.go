@@ -25,6 +25,7 @@ import (
 	"github.com/SmartEnergyPlatform/util/http/response"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -44,18 +45,15 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 
 	/*
 		query-parameter:
-			mutual exclusive:
-				usertag {string} 	filters result by user-tag
-				tag		{string} 	filters result by tag
 				search  {string}	filters by partial text match
 				ids		{string,string...} returns by ids
-			optional:
+				location {string}	id of location in which the found devices must be located
 				log		{string}	influxdb duration (for example 4h) https://docs.influxdata.com/influxdb/v1.7/query_language/spec/#durations
 				state 	{string} 	filters result by device state
 				sort 	{string} 	sorts result by filed; if data-source does not support sorting, it will be performed locally
 										name | name.asc | name.desc
-				limit 	{int} 		may default to 100; no effect when used with usertag and tag
-				offset 	{int}		may default to 0; no effect when used with usertag and tag
+				limit 	{int} 		may default to 100
+				offset 	{int}		may default to 0
 	*/
 	router.GET("/devices", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
 		state := r.URL.Query().Get("state")
@@ -64,50 +62,36 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 		offset := r.URL.Query().Get("offset")
 		search := r.URL.Query().Get("search")
 		ids := r.URL.Query().Get("ids")
+		location := r.URL.Query().Get("location")
 		logDuration := r.URL.Query().Get("log")
 
-		sorted := false
-		result := []map[string]interface{}{}
-		var err error
-		switch {
-		case ids != "":
-			idList := strings.Split(strings.Replace(ids, " ", "", -1), ",")
-			if limit != "" || offset != "" {
-				limit, offset = limitOffsetDefault(limit, offset)
-				if sort == "" {
-					sort = "name"
-				}
-				orderfeature, direction := getSortParts(sort)
-				sorted = true
-				result, err = lib.CompleteDevicesOrdered(jwt, idList, limit, offset, orderfeature, direction)
-			} else {
-				result, err = lib.CompleteDevices(jwt, idList)
-			}
-		case search != "":
-			limit, offset = limitOffsetDefault(limit, offset)
-			if sort != "" {
-				orderfeature, direction := getSortParts(sort)
-				sorted = true
-				result, err = lib.SearchDevicesOrdered(jwt, search, limit, offset, orderfeature, direction)
-			} else {
-				limit, offset = limitOffsetDefault(limit, offset)
-				result, err = lib.SearchDevices(jwt, search, limit, offset)
-			}
-		default:
-			if limit != "" || offset != "" {
-				limit, offset = limitOffsetDefault(limit, offset)
-				if sort != "" {
-					orderfeature, direction := getSortParts(sort)
-					sorted = true
-					result, err = lib.ListDevicesOrdered(jwt, limit, offset, orderfeature, direction)
-				} else {
-					limit, offset = limitOffsetDefault(limit, offset)
-					result, err = lib.ListDevices(jwt, limit, offset)
-				}
-			} else {
-				result, err = lib.ListAllDevices(jwt)
-			}
+		idList := []string{}
+		if ids != "" {
+			idList = strings.Split(strings.Replace(ids, " ", "", -1), ",")
 		}
+		limit, offset = limitOffsetDefault(limit, offset)
+		if sort == "" {
+			sort = "name"
+		}
+
+		intLimit, err := strconv.Atoi(limit)
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, "limit is not a number: "+err.Error(), http.StatusBadRequest)
+			return
+			return
+		}
+
+		intOffset, err := strconv.Atoi(offset)
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(res, "offset is not a number: "+err.Error(), http.StatusBadRequest)
+			return
+			return
+		}
+
+		orderfeature, direction := getSortParts(sort)
+		result, err := lib.FindDevices(jwt, search, idList, intLimit, intOffset, orderfeature, direction, location)
 		if err != nil {
 			log.Println("ERROR: ", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -130,20 +114,6 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 			log.Println("ERROR: ", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
-		}
-
-		if !sorted && sort != "" {
-			switch sort {
-			case "name.asc":
-				result = lib.SortByName(result, true)
-			case "name.desc":
-				result = lib.SortByName(result, false)
-			case "name":
-				result = lib.SortByName(result, true)
-			default:
-				http.Error(res, "unable to interpret sort "+sort, http.StatusBadRequest)
-				return
-			}
 		}
 		response.To(res).Json(result)
 	})

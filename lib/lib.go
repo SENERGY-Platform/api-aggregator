@@ -23,18 +23,10 @@ import (
 
 type Interface interface {
 	Config() Config
-	FilterDevicesByState(jwt jwt_http_router.Jwt, devices []map[string]interface{}, state string) (result []map[string]interface{}, err error)
 	SortByName(input []map[string]interface{}, sortAsc bool) (output []map[string]interface{})
-	GetConnectionFilteredDevicesOrder(jwt jwt_http_router.Jwt, value string, sortAsc bool) (result []map[string]interface{}, err error)
-	GetConnectionFilteredDevices(jwt jwt_http_router.Jwt, value string) (result []map[string]interface{}, err error)
-	ListAllDevices(jwt jwt_http_router.Jwt) (result []map[string]interface{}, err error)
-	ListDevices(jwt jwt_http_router.Jwt, limit string, offset string) (result []map[string]interface{}, err error)
-	SearchDevices(jwt jwt_http_router.Jwt, query string, limit string, offset string) (result []map[string]interface{}, err error)
-	ListDevicesOrdered(jwt jwt_http_router.Jwt, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error)
-	SearchDevicesOrdered(jwt jwt_http_router.Jwt, query string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error)
+	FilterDevicesByState(jwt jwt_http_router.Jwt, devices []map[string]interface{}, state string) (result []map[string]interface{}, err error)
 	CompleteDevices(jwt jwt_http_router.Jwt, ids []string) (result []map[string]interface{}, err error)
 	CompleteDevicesOrdered(jwt jwt_http_router.Jwt, ids []string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error)
-	GetDevicesHistory(jwt jwt_http_router.Jwt, duration string) (result []map[string]interface{}, err error)
 	GetGatewaysHistory(jwt jwt_http_router.Jwt, duration string) (result []map[string]interface{}, err error)
 	ListGateways(jwt jwt_http_router.Jwt, limit string, offset string) (result []map[string]interface{}, err error)
 	SearchGateways(jwt jwt_http_router.Jwt, query string, limit string, offset string) (result []map[string]interface{}, err error)
@@ -46,6 +38,7 @@ type Interface interface {
 	ListAllGateways(jwt jwt_http_router.Jwt) (result []map[string]interface{}, err error)
 	GetGatewayDevices(jwt jwt_http_router.Jwt, id string) (ids []string, err error)
 	GetDeviceTypeDevices(jwt jwt_http_router.Jwt, id string, limit string, offset string, orderFeature string, direction string) (ids []string, err error)
+	FindDevices(jwt jwt_http_router.Jwt, search string, list []string, limit int, offset int, orderfeature string, direction string, location string) ([]map[string]interface{}, error)
 }
 
 type Lib struct {

@@ -59,18 +59,6 @@ func (this *Lib) PermIdListOrdered(jwt jwt_http_router.Jwt, kind string, ids []s
 	return
 }
 
-func (this *Lib) PermListDevices(jwt jwt_http_router.Jwt, right string, limit string, offset string) (result []map[string]interface{}, err error) {
-	return this.PermList(jwt, "devices", right, limit, offset)
-}
-
-func (this *Lib) PermListDevicesOrdered(jwt jwt_http_router.Jwt, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return this.PermListOrdered(jwt, "devices", right, limit, offset, orderfeature, direction)
-}
-
-func (this *Lib) PermListAllDevices(jwt jwt_http_router.Jwt, right string) (result []map[string]interface{}, err error) {
-	return this.PermListAll(jwt, "devices", right)
-}
-
 func (this *Lib) PermListAllGateways(jwt jwt_http_router.Jwt, right string) (result []map[string]interface{}, err error) {
 	return this.PermListAll(jwt, "hubs", right)
 }
@@ -115,14 +103,6 @@ func (this *Lib) PermListOrdered(jwt jwt_http_router.Jwt, kind string, right str
 	return
 }
 
-func (this *Lib) PermSearchDevices(jwt jwt_http_router.Jwt, query string, right string, limit string, offset string) (result []map[string]interface{}, err error) {
-	return this.PermSearch(jwt, "devices", query, right, limit, offset)
-}
-
-func (this *Lib) PermSearchDevicesOrdered(jwt jwt_http_router.Jwt, query string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	return this.PermSearchOrdered(jwt, "devices", query, right, limit, offset, orderfeature, direction)
-}
-
 func (this *Lib) PermSearch(jwt jwt_http_router.Jwt, kind string, query string, right string, limit string, offset string) (result []map[string]interface{}, err error) {
 	//"/jwt/search/:resource_kind/:query/:right/:limit/:offset"
 	resp, err := jwt.Impersonate.Get(this.config.PermissionsUrl + "/jwt/search/" + url.PathEscape(kind) + "/" + url.PathEscape(query) + "/" + right + "/" + limit + "/" + offset)
@@ -139,32 +119,6 @@ func (this *Lib) PermSearch(jwt jwt_http_router.Jwt, kind string, query string, 
 
 func (this *Lib) PermSearchOrdered(jwt jwt_http_router.Jwt, kind string, query string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
 	resp, err := jwt.Impersonate.Get(this.config.PermissionsUrl + "/jwt/search/" + url.PathEscape(kind) + "/" + url.PathEscape(query) + "/" + right + "/" + limit + "/" + offset + "/" + url.PathEscape(orderfeature) + "/" + direction)
-	if err != nil {
-		return result, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		err = errors.New("access denied")
-		return result, err
-	}
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	return
-}
-
-func (this *Lib) PermSelect(jwt jwt_http_router.Jwt, kind string, field string, value string, right string) (result []map[string]interface{}, err error) {
-	resp, err := jwt.Impersonate.Get(this.config.PermissionsUrl + "/jwt/select/" + url.PathEscape(kind) + "/" + url.PathEscape(field) + "/" + url.PathEscape(value) + "/" + right)
-	if err != nil {
-		return result, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		err = errors.New("access denied")
-		return result, err
-	}
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	return
-}
-
-func (this *Lib) PermSelectOrdered(jwt jwt_http_router.Jwt, kind string, field string, value string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	resp, err := jwt.Impersonate.Get(this.config.PermissionsUrl + "/jwt/select/" + url.PathEscape(kind) + "/" + url.PathEscape(field) + "/" + url.PathEscape(value) + "/" + right + "/" + limit + "/" + offset + "/" + url.PathEscape(orderfeature) + "/" + direction)
 	if err != nil {
 		return result, err
 	}
