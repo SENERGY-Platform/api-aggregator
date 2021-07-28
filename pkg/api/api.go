@@ -18,30 +18,26 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/SmartEnergyPlatform/api-aggregator/lib"
-	"github.com/SmartEnergyPlatform/jwt-http-router"
-	"github.com/SmartEnergyPlatform/util/http/cors"
-	"github.com/SmartEnergyPlatform/util/http/logger"
-	"github.com/SmartEnergyPlatform/util/http/response"
+	"github.com/SmartEnergyPlatform/api-aggregator/pkg"
+	"github.com/SmartEnergyPlatform/api-aggregator/pkg/api/util"
+	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
+	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-func Start(lib lib.Interface) {
+func Start(lib pkg.Interface) {
 	log.Println("start server on port: ", lib.Config().ServerPort)
 	httpHandler := getRoutes(lib)
-	corseHandler := cors.New(httpHandler)
-	logger := logger.New(corseHandler, lib.Config().LogLevel)
+	corseHandler := util.NewCors(httpHandler)
+	logger := util.NewLogger(corseHandler)
 	log.Println(http.ListenAndServe(":"+lib.Config().ServerPort, logger))
 }
 
-func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
-	router = jwt_http_router.New(jwt_http_router.JwtConfig{
-		ForceUser: lib.Config().ForceUser,
-		ForceAuth: lib.Config().ForceAuth,
-	})
+func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
+	router = httprouter.New()
 
 	/*
 		query-parameter:
@@ -55,7 +51,7 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 				limit 	{int} 		may default to 100
 				offset 	{int}		may default to 0
 	*/
-	router.GET("/devices", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+	router.GET("/devices", func(res http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		state := r.URL.Query().Get("state")
 		sort := r.URL.Query().Get("sort")
 		limit := r.URL.Query().Get("limit")
@@ -90,15 +86,21 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 			return
 		}
 
+		token, err := auth.GetParsedToken(r)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		orderfeature, direction := getSortParts(sort)
-		result, err := lib.FindDevices(jwt, search, idList, intLimit, intOffset, orderfeature, direction, location)
+		result, err := lib.FindDevices(token, search, idList, intLimit, intOffset, orderfeature, direction, location)
 		if err != nil {
 			log.Println("ERROR: ", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		if state != "" {
-			result, err = lib.FilterDevicesByState(jwt, result, state)
+			result, err = lib.FilterDevicesByState(token, result, state)
 			if err != nil {
 				log.Println("ERROR: ", err)
 				http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -107,7 +109,7 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 		}
 
 		if logDuration != "" {
-			result, err = lib.CompleteDeviceHistory(jwt, logDuration, result)
+			result, err = lib.CompleteDeviceHistory(token, logDuration, result)
 		}
 
 		if err != nil {
@@ -115,7 +117,8 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		response.To(res).Json(result)
+		res.Header().Set("Content-Type", "application/json; charset=utf-8")
+		json.NewEncoder(res).Encode(result)
 	})
 
 	/*
@@ -128,33 +131,38 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 				sort 	{string} 	sorts result by filed
 										name | name.asc | name.desc
 	*/
-	router.GET("/hubs", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+	router.GET("/hubs", func(res http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		limit := r.URL.Query().Get("limit")
 		offset := r.URL.Query().Get("offset")
 		logDuration := r.URL.Query().Get("log")
 		search := r.URL.Query().Get("search")
 		sort := r.URL.Query().Get("sort")
 
+		token, err := auth.GetParsedToken(r)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		result := []map[string]interface{}{}
-		var err error
 
 		switch {
 		case limit == "" && offset == "" && sort == "" && search == "":
-			result, err = lib.ListAllGateways(jwt)
+			result, err = lib.ListAllGateways(token)
 		case search != "" && sort == "":
 			limit, offset = limitOffsetDefault(limit, offset)
-			result, err = lib.SearchGateways(jwt, search, limit, offset)
+			result, err = lib.SearchGateways(token, search, limit, offset)
 		case search != "" && sort != "":
 			orderfeature, direction := getSortParts(sort)
 			limit, offset = limitOffsetDefault(limit, offset)
-			result, err = lib.SearchGatewaysOrdered(jwt, search, limit, offset, orderfeature, direction)
+			result, err = lib.SearchGatewaysOrdered(token, search, limit, offset, orderfeature, direction)
 		case search == "" && sort == "":
 			limit, offset = limitOffsetDefault(limit, offset)
-			result, err = lib.ListGateways(jwt, limit, offset)
+			result, err = lib.ListGateways(token, limit, offset)
 		case search == "" && sort != "":
 			limit, offset = limitOffsetDefault(limit, offset)
 			orderfeature, direction := getSortParts(sort)
-			result, err = lib.ListGatewaysOrdered(jwt, limit, offset, orderfeature, direction)
+			result, err = lib.ListGatewaysOrdered(token, limit, offset, orderfeature, direction)
 		}
 
 		if err != nil {
@@ -164,7 +172,7 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 		}
 
 		if logDuration != "" {
-			result, err = lib.CompleteGatewayHistory(jwt, logDuration, result)
+			result, err = lib.CompleteGatewayHistory(token, logDuration, result)
 		}
 
 		if err != nil {
@@ -173,29 +181,43 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 			return
 		}
 
-		response.To(res).Json(result)
+		res.Header().Set("Content-Type", "application/json; charset=utf-8")
+		json.NewEncoder(res).Encode(result)
 	})
 
 	//reads query parameter like https://docs.camunda.org/manual/7.5/reference/rest/deployment/get-query/
-	router.GET("/processes", func(res http.ResponseWriter, r *http.Request, ps jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+	router.GET("/processes", func(res http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Println("DEBUG: ", r.URL.Query())
-		result, err := lib.GetExtendedProcessList(jwt, r.URL.Query())
+		token, err := auth.GetParsedToken(r)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+		result, err := lib.GetExtendedProcessList(token, r.URL.Query())
 		if err != nil {
 			log.Println("ERROR: ", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		response.To(res).Json(result)
+		res.Header().Set("Content-Type", "application/json; charset=utf-8")
+		json.NewEncoder(res).Encode(result)
 	})
 
-	router.GET("/hubs/:id/devices", func(writer http.ResponseWriter, request *http.Request, params jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+	router.GET("/hubs/:id/devices", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		sort := request.URL.Query().Get("sort")
 		limit := request.URL.Query().Get("limit")
 		offset := request.URL.Query().Get("offset")
 		state := request.URL.Query().Get("state")
 
 		id := params.ByName("id")
-		idList, err := lib.GetGatewayDevices(jwt, id)
+
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		idList, err := lib.GetGatewayDevices(token, id)
 		var result []map[string]interface{}
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -207,13 +229,13 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 				sort = "name"
 			}
 			orderfeature, direction := getSortParts(sort)
-			result, err = lib.CompleteDevicesOrdered(jwt, idList, limit, offset, orderfeature, direction)
+			result, err = lib.CompleteDevicesOrdered(token, idList, limit, offset, orderfeature, direction)
 		} else {
-			result, err = lib.CompleteDevices(jwt, idList)
+			result, err = lib.CompleteDevices(token, idList)
 		}
 
 		if state != "" {
-			result, err = lib.FilterDevicesByState(jwt, result, state)
+			result, err = lib.FilterDevicesByState(token, result, state)
 			if err != nil {
 				log.Println("ERROR: ", err)
 				http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -221,10 +243,11 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 			}
 		}
 
-		response.To(writer).Json(result)
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		json.NewEncoder(writer).Encode(result)
 	})
 
-	router.GET("/device-types/:id/devices", func(writer http.ResponseWriter, request *http.Request, params jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+	router.GET("/device-types/:id/devices", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		sort := request.URL.Query().Get("sort")
 		limit := request.URL.Query().Get("limit")
 		offset := request.URL.Query().Get("offset")
@@ -238,20 +261,26 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 		}
 		orderfeature, direction := getSortParts(sort)
 
-		idList, err := lib.GetDeviceTypeDevices(jwt, id, limit, offset, orderfeature, direction)
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		idList, err := lib.GetDeviceTypeDevices(token, id, limit, offset, orderfeature, direction)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		result, err := lib.CompleteDevices(jwt, idList)
+		result, err := lib.CompleteDevices(token, idList)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		if state != "" {
-			result, err = lib.FilterDevicesByState(jwt, result, state)
+			result, err = lib.FilterDevicesByState(token, result, state)
 			if err != nil {
 				log.Println("ERROR: ", err)
 				http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -259,19 +288,26 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 			}
 		}
 
-		response.To(writer).Json(result)
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		json.NewEncoder(writer).Encode(result)
 	})
 
-	router.POST("/device-types-devices", func(writer http.ResponseWriter, request *http.Request, params jwt_http_router.Params, jwt jwt_http_router.Jwt) {
+	router.POST("/device-types-devices", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		state := request.URL.Query().Get("state")
 		direction := request.URL.Query().Get("direction")
 		orderfeature, direction := getSortParts("name.asc")
+
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
 
 		type deviceTypesDevicesBody struct {
 			Ids []string `json:"ids"`
 		}
 		var body deviceTypesDevicesBody
-		err := json.NewDecoder(request.Body).Decode(&body)
+		err = json.NewDecoder(request.Body).Decode(&body)
 		if err != nil {
 			http.Error(writer, "unable to parse request body: "+err.Error(), http.StatusBadRequest)
 			return
@@ -279,7 +315,7 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 
 		idList := []string{}
 		for _, id := range body.Ids {
-			deviceIds, err := lib.GetDeviceTypeDevices(jwt, id, "-1", "-1", orderfeature, direction)
+			deviceIds, err := lib.GetDeviceTypeDevices(token, id, "-1", "-1", orderfeature, direction)
 
 			if err != nil {
 				http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -288,14 +324,14 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 			idList = append(idList, deviceIds...)
 		}
 
-		result, err := lib.CompleteDevices(jwt, idList)
+		result, err := lib.CompleteDevices(token, idList)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		if state != "" {
-			result, err = lib.FilterDevicesByState(jwt, result, state)
+			result, err = lib.FilterDevicesByState(token, result, state)
 			if err != nil {
 				log.Println("ERROR: ", err)
 				http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -305,7 +341,8 @@ func getRoutes(lib lib.Interface) (router *jwt_http_router.Router) {
 
 		result = lib.SortByName(result, true)
 
-		response.To(writer).Json(result)
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		json.NewEncoder(writer).Encode(result)
 	})
 
 	return

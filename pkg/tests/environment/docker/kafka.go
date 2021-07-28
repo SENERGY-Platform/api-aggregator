@@ -45,19 +45,19 @@ func GetHostIp() (string, error) {
 	return "", errors.New("no bridge network found")
 }
 
-func Kafka(ctx context.Context, wg *sync.WaitGroup, zookeeperUrl string) (err error) {
+func Kafka(ctx context.Context, wg *sync.WaitGroup, zookeeperUrl string) (kafkaUrl string, err error) {
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		return err
+		return kafkaUrl, err
 	}
 	kafkaport, err := getFreePort()
 	if err != nil {
-		return err
+		return kafkaUrl, err
 	}
 	networks, _ := pool.Client.ListNetworks()
 	hostIp, err := GetHostIp()
 	if err != nil {
-		return err
+		return kafkaUrl, err
 	}
 	for _, network := range networks {
 		if network.Name == "bridge" {
@@ -65,6 +65,7 @@ func Kafka(ctx context.Context, wg *sync.WaitGroup, zookeeperUrl string) (err er
 		}
 	}
 	log.Println("host ip: ", hostIp)
+	kafkaUrl = hostIp + ":" + strconv.Itoa(kafkaport)
 	env := []string{
 		"ALLOW_PLAINTEXT_LISTENER=yes",
 		"KAFKA_LISTENERS=OUTSIDE://:9092",
@@ -78,7 +79,7 @@ func Kafka(ctx context.Context, wg *sync.WaitGroup, zookeeperUrl string) (err er
 		"9092/tcp": {{HostIP: "", HostPort: strconv.Itoa(kafkaport)}},
 	}})
 	if err != nil {
-		return err
+		return kafkaUrl, err
 	}
 	wg.Add(1)
 	go func() {
@@ -98,7 +99,7 @@ func Kafka(ctx context.Context, wg *sync.WaitGroup, zookeeperUrl string) (err er
 		return nil
 	})
 	time.Sleep(5 * time.Second)
-	return err
+	return kafkaUrl, err
 }
 
 func Zookeeper(ctx context.Context, wg *sync.WaitGroup) (hostPort string, ipAddress string, err error) {

@@ -3,10 +3,9 @@ package tests
 import (
 	"context"
 	"encoding/json"
-	"github.com/SmartEnergyPlatform/api-aggregator/api"
-	"github.com/SmartEnergyPlatform/api-aggregator/lib"
-	"github.com/SmartEnergyPlatform/api-aggregator/tests/environment"
-	jwt_http_router "github.com/SmartEnergyPlatform/jwt-http-router"
+	"github.com/SmartEnergyPlatform/api-aggregator/pkg"
+	"github.com/SmartEnergyPlatform/api-aggregator/pkg/api"
+	"github.com/SmartEnergyPlatform/api-aggregator/pkg/tests/environment"
 	"net"
 	"reflect"
 	"sort"
@@ -34,12 +33,9 @@ func TestDevicesEndpoint(t *testing.T) {
 		return
 	}
 
-	go api.Start(lib.New(lib.Config{
+	go api.Start(pkg.New(pkg.Config{
 		ServerPort:     serverPort,
-		LogLevel:       "CALL",
 		PermissionsUrl: permSearchUrl,
-		ForceUser:      true,
-		ForceAuth:      true,
 	}))
 
 	devices := []environment.Device{
@@ -180,7 +176,7 @@ func TestDevicesEndpoint(t *testing.T) {
 func testDeviceQuery(query string, port string, expected []environment.Device) (string, func(t *testing.T)) {
 	return query, func(t *testing.T) {
 		result := []environment.Device{}
-		err := testjwt.GetJSON("http://localhost:"+port+"/devices"+strings.ReplaceAll(query, ":", "%3A"), &result)
+		err := pkg.GetJson(testjwt, "http://localhost:"+port+"/devices"+strings.ReplaceAll(query, ":", "%3A"), &result)
 		if err != nil {
 			t.Error(err)
 			return
@@ -223,7 +219,7 @@ func createLocations(publisher *environment.Publisher, locations []environment.L
 	}
 }
 
-var testjwt = jwt_http_router.JwtImpersonate(`Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIzaUtabW9aUHpsMmRtQnBJdS1vSkY4ZVVUZHh4OUFIckVOcG5CcHM5SjYwIn0.eyJleHAiOjE2MTEyMTkwMzAsImlhdCI6MTYxMTIxNTQzMCwiYXV0aF90aW1lIjoxNjExMjE1NDI5LCJqdGkiOiJiZjY0NGI3Yy04YTZjLTQyYmMtOWNkNS0wODQ1NGU3ZmY1NDkiLCJpc3MiOiJodHRwOi8vZmdzZWl0c3JhbmNoZXIud2lmYS5pbnRlcm4udW5pLWxlaXB6aWcuZGU6ODA4Ny9hdXRoL3JlYWxtcy9tYXN0ZXIiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiNjIxOWRjNDItYjhkMC00YjQyLTg1MWEtMWM1OTU2MTQ5OTQ0IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiZnJvbnRlbmQiLCJub25jZSI6IjkxZjdkYWViLTE2YzEtNDcwNy04YjNkLTFkY2NjOWI1NzMzMyIsInNlc3Npb25fc3RhdGUiOiI4ODAxMTBiOC1jYmM1LTQ2YWItYjRmYS1lM2Q4OGEwYjdhYzEiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIioiXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwiZGV2ZWxvcGVyIiwidW1hX2F1dGhvcml6YXRpb24iLCJ1c2VyIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQiLCJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsImRldmVsb3BlciIsInVtYV9hdXRob3JpemF0aW9uIiwidXNlciJdLCJuYW1lIjoiRGVtbyBVc2VyIiwicHJlZmVycmVkX3VzZXJuYW1lIjoiZGVtby51c2VyIiwiZ2l2ZW5fbmFtZSI6IkRlbW8iLCJmYW1pbHlfbmFtZSI6IlVzZXIiLCJlbWFpbCI6IiJ9.H4YEIT3zJP67xjORJNiD6zr208SkcXi4LmN-sosZs5lPKLOJzEIxqn6gFphGRrcBfWHa5QZftFdpuw_yItvQSVMr5mNnsf8sNEFEsGu4zVfipnQdg3crY5TBK7dKiczhQarBPALFXP5Q2Q8uuuX2wAta76j3gl6X5RIbcwlNqKC5BG3LIoFbYVIeeKqhgNFEON5H530klJBzZ2pvLAXZxptQZUMydWTik7DrJrYSx_sPPCJtrz_d5UVT0ppkZ5h_MZGa4fJM0aVXW0hs7gxGEIQGpSY5-wma9EpP_C-mfY53jDOLn0etRfNEgjZo4116yLqamt-3MsY7_GB9fydkuw`)
+var testjwt = `Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIzaUtabW9aUHpsMmRtQnBJdS1vSkY4ZVVUZHh4OUFIckVOcG5CcHM5SjYwIn0.eyJleHAiOjE2MTEyMTkwMzAsImlhdCI6MTYxMTIxNTQzMCwiYXV0aF90aW1lIjoxNjExMjE1NDI5LCJqdGkiOiJiZjY0NGI3Yy04YTZjLTQyYmMtOWNkNS0wODQ1NGU3ZmY1NDkiLCJpc3MiOiJodHRwOi8vZmdzZWl0c3JhbmNoZXIud2lmYS5pbnRlcm4udW5pLWxlaXB6aWcuZGU6ODA4Ny9hdXRoL3JlYWxtcy9tYXN0ZXIiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiNjIxOWRjNDItYjhkMC00YjQyLTg1MWEtMWM1OTU2MTQ5OTQ0IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiZnJvbnRlbmQiLCJub25jZSI6IjkxZjdkYWViLTE2YzEtNDcwNy04YjNkLTFkY2NjOWI1NzMzMyIsInNlc3Npb25fc3RhdGUiOiI4ODAxMTBiOC1jYmM1LTQ2YWItYjRmYS1lM2Q4OGEwYjdhYzEiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIioiXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwiZGV2ZWxvcGVyIiwidW1hX2F1dGhvcml6YXRpb24iLCJ1c2VyIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQiLCJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsImRldmVsb3BlciIsInVtYV9hdXRob3JpemF0aW9uIiwidXNlciJdLCJuYW1lIjoiRGVtbyBVc2VyIiwicHJlZmVycmVkX3VzZXJuYW1lIjoiZGVtby51c2VyIiwiZ2l2ZW5fbmFtZSI6IkRlbW8iLCJmYW1pbHlfbmFtZSI6IlVzZXIiLCJlbWFpbCI6IiJ9.H4YEIT3zJP67xjORJNiD6zr208SkcXi4LmN-sosZs5lPKLOJzEIxqn6gFphGRrcBfWHa5QZftFdpuw_yItvQSVMr5mNnsf8sNEFEsGu4zVfipnQdg3crY5TBK7dKiczhQarBPALFXP5Q2Q8uuuX2wAta76j3gl6X5RIbcwlNqKC5BG3LIoFbYVIeeKqhgNFEON5H530klJBzZ2pvLAXZxptQZUMydWTik7DrJrYSx_sPPCJtrz_d5UVT0ppkZ5h_MZGa4fJM0aVXW0hs7gxGEIQGpSY5-wma9EpP_C-mfY53jDOLn0etRfNEgjZo4116yLqamt-3MsY7_GB9fydkuw`
 
 const userId = "6219dc42-b8d0-4b42-851a-1c5956149944"
 

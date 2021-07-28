@@ -1,12 +1,12 @@
-package lib
+package pkg
 
 import (
 	"errors"
-	jwt_http_router "github.com/SmartEnergyPlatform/jwt-http-router"
+	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
 )
 
-func (this *Lib) GetDevicesInLocation(jwt jwt_http_router.Jwt, location string) (deviceIds []string, err error) {
-	locations, err := this.GetLocations(jwt, []string{location})
+func (this *Lib) GetDevicesInLocation(token auth.Token, location string) (deviceIds []string, err error) {
+	locations, err := this.GetLocations(token, []string{location})
 	if err != nil {
 		return nil, err
 	}
@@ -16,8 +16,8 @@ func (this *Lib) GetDevicesInLocation(jwt jwt_http_router.Jwt, location string) 
 	return locations[0].DeviceIds, nil
 }
 
-func (this *Lib) GetLocations(jwt jwt_http_router.Jwt, locationIds []string) (locations []Location, err error) {
-	err, _ = this.QueryPermissionsSearch(string(jwt.Impersonate), QueryMessage{
+func (this *Lib) GetLocations(token auth.Token, locationIds []string) (locations []Location, err error) {
+	err, _ = this.QueryPermissionsSearch(token.Token, QueryMessage{
 		Resource: "locations",
 		ListIds: &QueryListIds{
 			QueryListCommons: QueryListCommons{

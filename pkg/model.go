@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package lib
+package pkg
 
 type Dependencies struct {
 	DeploymentId string             `json:"deployment_id" bson:"deployment_id"`

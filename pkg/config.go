@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package lib
+package pkg
 
 import (
 	"encoding/json"
@@ -29,7 +29,6 @@ import (
 
 type Config struct {
 	ServerPort string `json:"server_port"`
-	LogLevel   string `json:"log_level"`
 
 	IotUrl           string `json:"iot_url"`
 	ConnectionLogUrl string `json:"connection_log_url"`
@@ -38,9 +37,6 @@ type Config struct {
 	CamundaWrapperUrl    string `json:"camunda_wrapper_url"`
 	ProcessDeploymentUrl string `json:"process_deployment_url"`
 	EventManagerUrl      string `json:"event_manager_url"`
-
-	ForceUser bool `json:"force_user"`
-	ForceAuth bool `json:"force_auth"`
 }
 
 func LoadConfig(location string) (config Config, err error) {

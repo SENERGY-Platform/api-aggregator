@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package lib
+package pkg
 
 import (
 	"errors"
-	"github.com/SmartEnergyPlatform/jwt-http-router"
+	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
 	"log"
 	"runtime/debug"
 	"sort"
 )
 
-func (this *Lib) FindDevices(jwt jwt_http_router.Jwt, search string, deviceIds []string, limit int, offset int, orderfeature string, direction string, location string) (devices []map[string]interface{}, err error) {
+func (this *Lib) FindDevices(token auth.Token, search string, deviceIds []string, limit int, offset int, orderfeature string, direction string, location string) (devices []map[string]interface{}, err error) {
 	var listIds *QueryListIds
 	var find *QueryFind
 
@@ -39,7 +39,7 @@ func (this *Lib) FindDevices(jwt jwt_http_router.Jwt, search string, deviceIds [
 	}
 	filteredIds := []string{}
 	if location != "" {
-		locationDevices, err := this.GetDevicesInLocation(jwt, location)
+		locationDevices, err := this.GetDevicesInLocation(token, location)
 		if err != nil {
 			return nil, err
 		}
@@ -79,11 +79,11 @@ func (this *Lib) FindDevices(jwt jwt_http_router.Jwt, search string, deviceIds [
 		ListIds:  listIds,
 	}
 
-	err, _ = this.QueryPermissionsSearch(string(jwt.Impersonate), query, &devices)
+	err, _ = this.QueryPermissionsSearch(token.Token, query, &devices)
 	if err != nil {
 		return nil, err
 	}
-	return this.completeDeviceList(jwt, devices)
+	return this.completeDeviceList(token, devices)
 }
 
 func (this *Lib) SortByName(input []map[string]interface{}, sortAsc bool) (output []map[string]interface{}) {
@@ -114,8 +114,8 @@ func intersection(a []string, b []string) (result []string) {
 	return result
 }
 
-func (this *Lib) FilterDevicesByState(jwt jwt_http_router.Jwt, devices []map[string]interface{}, state string) (result []map[string]interface{}, err error) {
-	devicesWithOnlineState, err := this.completeDeviceList(jwt, devices)
+func (this *Lib) FilterDevicesByState(token auth.Token, devices []map[string]interface{}, state string) (result []map[string]interface{}, err error) {
+	devicesWithOnlineState, err := this.completeDeviceList(token, devices)
 	if err != nil {
 		log.Println("ERROR GetConnectionFilteredDevices.completeDeviceList()", err)
 		return devices, err
@@ -136,23 +136,23 @@ func (this *Lib) FilterDevicesByState(jwt jwt_http_router.Jwt, devices []map[str
 	return
 }
 
-func (this *Lib) CompleteDevices(jwt jwt_http_router.Jwt, ids []string) (result []map[string]interface{}, err error) {
-	devices, err := this.PermDeviceIdList(jwt, ids, "r")
+func (this *Lib) CompleteDevices(token auth.Token, ids []string) (result []map[string]interface{}, err error) {
+	devices, err := this.PermDeviceIdList(token, ids, "r")
 	if err != nil {
 		return result, err
 	}
-	return this.completeDeviceList(jwt, devices)
+	return this.completeDeviceList(token, devices)
 }
 
-func (this *Lib) CompleteDevicesOrdered(jwt jwt_http_router.Jwt, ids []string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	devices, err := this.PermDeviceIdListOrdered(jwt, ids, "r", limit, offset, orderfeature, direction)
+func (this *Lib) CompleteDevicesOrdered(token auth.Token, ids []string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
+	devices, err := this.PermDeviceIdListOrdered(token, ids, "r", limit, offset, orderfeature, direction)
 	if err != nil {
 		return result, err
 	}
-	return this.completeDeviceList(jwt, devices)
+	return this.completeDeviceList(token, devices)
 }
 
-func (this *Lib) completeDeviceList(jwt jwt_http_router.Jwt, devices []map[string]interface{}) (result []map[string]interface{}, err error) {
+func (this *Lib) completeDeviceList(token auth.Token, devices []map[string]interface{}) (result []map[string]interface{}, err error) {
 	ids := []string{}
 	deviceMap := map[string]map[string]interface{}{}
 	for _, device := range devices {
@@ -169,7 +169,7 @@ func (this *Lib) completeDeviceList(jwt jwt_http_router.Jwt, devices []map[strin
 		ids = append(ids, idStr)
 		deviceMap[idStr] = device
 	}
-	logStates, err := this.GetDeviceLogStates(jwt, ids)
+	logStates, err := this.GetDeviceLogStates(token, ids)
 	if err != nil {
 		log.Println("ERROR completeDeviceList.GetDeviceLogStates()", err)
 		return result, err
@@ -181,7 +181,7 @@ func (this *Lib) completeDeviceList(jwt jwt_http_router.Jwt, devices []map[strin
 			return result, err
 		}
 	*/
-	deviceTypes, err := this.getDeviceDeviceTypeInfos(jwt, devices)
+	deviceTypes, err := this.getDeviceDeviceTypeInfos(token, devices)
 	if err != nil {
 		return result, err
 	}
@@ -202,7 +202,7 @@ func (this *Lib) completeDeviceList(jwt jwt_http_router.Jwt, devices []map[strin
 	return
 }
 
-func (this *Lib) CompleteDeviceHistory(jwt jwt_http_router.Jwt, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error) {
+func (this *Lib) CompleteDeviceHistory(token auth.Token, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error) {
 	ids := []string{}
 	deviceMap := map[string]map[string]interface{}{}
 	for _, device := range devices {
@@ -219,17 +219,17 @@ func (this *Lib) CompleteDeviceHistory(jwt jwt_http_router.Jwt, duration string,
 		ids = append(ids, idStr)
 		deviceMap[idStr] = device
 	}
-	logStates, err := this.GetDeviceLogStates(jwt, ids)
+	logStates, err := this.GetDeviceLogStates(token, ids)
 	if err != nil {
 		log.Println("ERROR completeDeviceList.GetDeviceLogStates()", err)
 		return result, err
 	}
-	logHistory, err := this.GetDeviceLogHistory(jwt, ids, duration)
+	logHistory, err := this.GetDeviceLogHistory(token, ids, duration)
 	if err != nil {
 		log.Println("ERROR completeDeviceList.GetDeviceLogHistory()", err)
 		return result, err
 	}
-	logEdges, err := this.GetLogedges(jwt, "device", ids, duration)
+	logEdges, err := this.GetLogedges(token, "device", ids, duration)
 	if err != nil {
 		log.Println("ERROR completeDeviceList.GetLogedges()", err)
 		return result, err
@@ -253,7 +253,7 @@ func (this *Lib) CompleteDeviceHistory(jwt jwt_http_router.Jwt, duration string,
 	return
 }
 
-func (this *Lib) getDeviceDeviceTypeInfos(jwt jwt_http_router.Jwt, devices []map[string]interface{}) (deviceToDeviceType map[string]map[string]interface{}, err error) {
+func (this *Lib) getDeviceDeviceTypeInfos(token auth.Token, devices []map[string]interface{}) (deviceToDeviceType map[string]map[string]interface{}, err error) {
 	deviceToDeviceType = map[string]map[string]interface{}{}
 
 	//ensure no device type id duplicates
@@ -278,7 +278,7 @@ func (this *Lib) getDeviceDeviceTypeInfos(jwt jwt_http_router.Jwt, devices []map
 	}
 
 	//get device types
-	deviceTypes, err := this.PermSelectDeviceTypesByIdRead(jwt, ids)
+	deviceTypes, err := this.PermSelectDeviceTypesByIdRead(token, ids)
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()
@@ -330,12 +330,12 @@ func (this *Lib) getDeviceDeviceTypeInfos(jwt jwt_http_router.Jwt, devices []map
 	return
 }
 
-func (this *Lib) GetDeviceTypeDevices(jwt jwt_http_router.Jwt, id string, limit string, offset string, orderFeature string, direction string) (ids []string, err error) {
+func (this *Lib) GetDeviceTypeDevices(token auth.Token, id string, limit string, offset string, orderFeature string, direction string) (ids []string, err error) {
 	type device struct {
 		Id string `json:"id"`
 	}
 	var devices []device
-	err = jwt.Impersonate.GetJSON(this.config.PermissionsUrl+"/jwt/select/devices/device_type_id/"+id+"/r/"+limit+"/"+offset+"/"+orderFeature+"/"+direction, &devices)
+	err = GetJson(token.Token, this.config.PermissionsUrl+"/jwt/select/devices/device_type_id/"+id+"/r/"+limit+"/"+offset+"/"+orderFeature+"/"+direction, &devices)
 
 	for _, d := range devices {
 		ids = append(ids, d.Id)

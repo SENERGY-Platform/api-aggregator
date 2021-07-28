@@ -1,4 +1,4 @@
-package lib
+package pkg
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ func (this *Lib) QueryPermissionsSearch(token string, query QueryMessage, result
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
-	req, err := http.NewRequest("POST", this.config.PermissionsUrl+"/v2/query", requestBody)
+	req, err := http.NewRequest("POST", this.config.PermissionsUrl+"/v3/query", requestBody)
 	if err != nil {
 		debug.PrintStack()
 		return err, http.StatusInternalServerError

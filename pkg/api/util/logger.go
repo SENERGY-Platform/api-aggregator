@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 InfAI (CC SES)
+ * Copyright 2019 InfAI (CC SES)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,32 @@
  * limitations under the License.
  */
 
-package main
+package util
 
 import (
-	"flag"
-	"fmt"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg/api"
 	"log"
+	"net/http"
 )
 
-func main() {
-	defer fmt.Println("exit application")
-	configLocation := flag.String("config", "config.json", "configuration file")
-	flag.Parse()
+func NewLogger(handler http.Handler) http.Handler {
+	return &LoggerMiddleWare{handler: handler}
+}
 
-	config, err := pkg.LoadConfig(*configLocation)
-	if err != nil {
-		log.Fatal("unable to load config", err)
+type LoggerMiddleWare struct {
+	handler http.Handler
+}
+
+func (this *LoggerMiddleWare) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	this.log(r)
+	if this.handler != nil {
+		this.handler.ServeHTTP(w, r)
 	} else {
-		api.Start(pkg.New(config))
+		http.Error(w, "Forbidden", 403)
 	}
+}
+
+func (this *LoggerMiddleWare) log(request *http.Request) {
+	method := request.Method
+	path := request.URL
+	log.Printf("[%v] %v \n", method, path)
 }

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package lib
+package pkg
 
 import (
 	"encoding/json"
 	"errors"
-	"github.com/SmartEnergyPlatform/jwt-http-router"
+	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -28,8 +28,8 @@ import (
 	"strings"
 )
 
-func (this *Lib) GetExtendedProcessList(jwt jwt_http_router.Jwt, query url.Values) (result []map[string]interface{}, err error) {
-	processes, err := this.GetProcessDeploymentList(jwt, query)
+func (this *Lib) GetExtendedProcessList(token auth.Token, query url.Values) (result []map[string]interface{}, err error) {
+	processes, err := this.GetProcessDeploymentList(token, query)
 	if err != nil {
 		return result, err
 	}
@@ -42,11 +42,11 @@ func (this *Lib) GetExtendedProcessList(jwt jwt_http_router.Jwt, query url.Value
 		}
 		ids = append(ids, id)
 	}
-	metadata, err := this.GetProcessDependencyList(jwt, ids)
+	metadata, err := this.GetProcessDependencyList(token, ids)
 	if err != nil {
 		return result, err
 	}
-	metadata, err = this.SetOnlineState(jwt, metadata)
+	metadata, err = this.SetOnlineState(token, metadata)
 	if err != nil {
 		return result, err
 	}
@@ -71,7 +71,7 @@ func (this *Lib) GetExtendedProcessList(jwt jwt_http_router.Jwt, query url.Value
 	return
 }
 
-func (this *Lib) GetProcessDeploymentList(jwt jwt_http_router.Jwt, query url.Values) (result []map[string]interface{}, err error) {
+func (this *Lib) GetProcessDeploymentList(token auth.Token, query url.Values) (result []map[string]interface{}, err error) {
 	if this.Config().CamundaWrapperUrl == "" || this.Config().CamundaWrapperUrl == "-" {
 		log.Println("WARNING: no CamundaWrapperUrl url configured")
 		return
@@ -81,7 +81,7 @@ func (this *Lib) GetProcessDeploymentList(jwt jwt_http_router.Jwt, query url.Val
 		debug.PrintStack()
 		return nil, err
 	}
-	req.Header.Set("Authorization", string(jwt.Impersonate))
+	req.Header.Set("Authorization", token.Token)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Println("ERROR: GetProcessDeploymentList()::http.DefaultClient.Do(req)", err)
@@ -102,12 +102,12 @@ func (this *Lib) GetProcessDeploymentList(jwt jwt_http_router.Jwt, query url.Val
 	return result, err
 }
 
-func (this *Lib) GetProcessDependencyList(jwt jwt_http_router.Jwt, processIds []string) (result []Dependencies, err error) {
+func (this *Lib) GetProcessDependencyList(token auth.Token, processIds []string) (result []Dependencies, err error) {
 	if this.Config().ProcessDeploymentUrl == "" || this.Config().ProcessDeploymentUrl == "-" {
 		log.Println("WARNING: no ProcessDeploymentUrl url configured")
 		return
 	}
-	err = jwt.Impersonate.GetJSON(this.config.ProcessDeploymentUrl+"/dependencies?ids="+strings.Join(processIds, ","), &result)
+	err = GetJson(token.Token, this.config.ProcessDeploymentUrl+"/dependencies?ids="+strings.Join(processIds, ","), &result)
 	return
 }
 

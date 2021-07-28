@@ -1,9 +1,5 @@
 {
   "server_port": "8080",
-  "log_level": "CALL",
-
-  "force_user": true,
-  "force_auth": true,
 
   "permissions_url": "http://permissionsearch:8080",
   "iot_url": "http://iot-repo:8080",

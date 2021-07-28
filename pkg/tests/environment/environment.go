@@ -18,7 +18,7 @@ package environment
 
 import (
 	"context"
-	"github.com/SmartEnergyPlatform/api-aggregator/tests/environment/docker"
+	"github.com/SmartEnergyPlatform/api-aggregator/pkg/tests/environment/docker"
 	"log"
 	"runtime/debug"
 	"sync"
@@ -34,7 +34,7 @@ func New(ctx context.Context, wg *sync.WaitGroup) (permSearchUrl string, publish
 	}
 	zkUrl := zk + ":2181"
 
-	err = docker.Kafka(ctx, wg, zkUrl)
+	kafkaUrl, err := docker.Kafka(ctx, wg, zkUrl)
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()
@@ -48,7 +48,7 @@ func New(ctx context.Context, wg *sync.WaitGroup) (permSearchUrl string, publish
 		return "", nil, err
 	}
 
-	_, permIp, err := docker.PermSearch(ctx, wg, zkUrl, elasticIp)
+	_, permIp, err := docker.PermSearch(ctx, wg, kafkaUrl, elasticIp)
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()
