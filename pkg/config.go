@@ -34,9 +34,10 @@ type Config struct {
 	ConnectionLogUrl string `json:"connection_log_url"`
 	PermissionsUrl   string `json:"permissions_url"`
 
-	CamundaWrapperUrl    string `json:"camunda_wrapper_url"`
-	ProcessDeploymentUrl string `json:"process_deployment_url"`
-	EventManagerUrl      string `json:"event_manager_url"`
+	CamundaWrapperUrl                string `json:"camunda_wrapper_url"`
+	ProcessDeploymentUrl             string `json:"process_deployment_url"`
+	EventManagerUrl                  string `json:"event_manager_url"`
+	UseAnnotationsForConnectionState bool   `json:"use_annotations_for_connection_state"`
 }
 
 func LoadConfig(location string) (config Config, err error) {

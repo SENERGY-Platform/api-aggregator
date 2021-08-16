@@ -93,7 +93,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		}
 
 		orderfeature, direction := getSortParts(sort)
-		result, err := lib.FindDevices(token, search, idList, intLimit, intOffset, orderfeature, direction, location)
+		result, err := lib.FindDevices(token, search, idList, intLimit, intOffset, orderfeature, direction, location, state)
 		if err != nil {
 			log.Println("ERROR: ", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)

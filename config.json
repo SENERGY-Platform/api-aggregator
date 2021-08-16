@@ -7,5 +7,7 @@
 
   "camunda_wrapper_url": "",
   "process_deployment_url": "",
-  "event_manager_url": ""
+  "event_manager_url": "",
+
+  "use_annotations_for_connection_state": true
 }

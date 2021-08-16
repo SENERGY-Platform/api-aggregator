@@ -24,7 +24,7 @@ import (
 	"sort"
 )
 
-func (this *Lib) FindDevices(token auth.Token, search string, deviceIds []string, limit int, offset int, orderfeature string, direction string, location string) (devices []map[string]interface{}, err error) {
+func (this *Lib) FindDevices(token auth.Token, search string, deviceIds []string, limit int, offset int, orderfeature string, direction string, location string, state string) (devices []map[string]interface{}, err error) {
 	var listIds *QueryListIds
 	var find *QueryFind
 
@@ -64,6 +64,35 @@ func (this *Lib) FindDevices(token auth.Token, search string, deviceIds []string
 					Operation: QueryAnyValueInFeatureOperation,
 					Value:     filteredIds,
 				},
+			}
+		}
+		if state != "" {
+			stateFilter := Selection{
+				Condition: ConditionConfig{
+					Feature:   "annotations.connected",
+					Operation: QueryEqualOperation,
+				},
+			}
+			switch state {
+			case "connected":
+				stateFilter.Condition.Value = true
+			case "disconnected":
+				stateFilter.Condition.Value = false
+			case "unknown":
+				stateFilter.Condition.Value = nil
+			default:
+				return devices, errors.New("unknown state in query: " + state)
+			}
+			if filter != nil {
+				temp := Selection{
+					And: []Selection{
+						*filter,
+						stateFilter,
+					},
+				}
+				filter = &temp
+			} else {
+				filter = &stateFilter
 			}
 		}
 		find = &QueryFind{
@@ -169,18 +198,29 @@ func (this *Lib) completeDeviceList(token auth.Token, devices []map[string]inter
 		ids = append(ids, idStr)
 		deviceMap[idStr] = device
 	}
-	logStates, err := this.GetDeviceLogStates(token, ids)
-	if err != nil {
-		log.Println("ERROR completeDeviceList.GetDeviceLogStates()", err)
-		return result, err
-	}
-	/*
-		gateways, err := GatewayNames(jwt, ids)
+
+	logStates := map[string]bool{}
+	if this.config.UseAnnotationsForConnectionState {
+		for _, device := range devices {
+			id, idok := device["id"].(string)
+			if idok {
+				annotations, aok := device["annotations"].(map[string]interface{})
+				if aok {
+					state, sok := annotations["connected"].(bool)
+					if sok {
+						logStates[id] = state
+					}
+				}
+			}
+		}
+	} else {
+		logStates, err = this.GetDeviceLogStates(token, ids)
 		if err != nil {
-			log.Println("ERROR completeDeviceList.GatewayNames()", err)
+			log.Println("ERROR completeDeviceList.GetDeviceLogStates()", err)
 			return result, err
 		}
-	*/
+	}
+
 	deviceTypes, err := this.getDeviceDeviceTypeInfos(token, devices)
 	if err != nil {
 		return result, err

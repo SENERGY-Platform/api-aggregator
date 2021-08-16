@@ -44,7 +44,7 @@ type Interface interface {
 	ListAllGateways(token auth.Token) (result []map[string]interface{}, err error)
 	GetGatewayDevices(token auth.Token, id string) (ids []string, err error)
 	GetDeviceTypeDevices(token auth.Token, id string, limit string, offset string, orderFeature string, direction string) (ids []string, err error)
-	FindDevices(token auth.Token, search string, list []string, limit int, offset int, orderfeature string, direction string, location string) ([]map[string]interface{}, error)
+	FindDevices(token auth.Token, search string, list []string, limit int, offset int, orderfeature string, direction string, location string, state string) ([]map[string]interface{}, error)
 }
 
 type Lib struct {
