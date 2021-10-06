@@ -20,11 +20,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Config struct {
@@ -38,21 +40,23 @@ type Config struct {
 	ProcessDeploymentUrl             string `json:"process_deployment_url"`
 	EventManagerUrl                  string `json:"event_manager_url"`
 	UseAnnotationsForConnectionState bool   `json:"use_annotations_for_connection_state"`
+	HttpTimeout                      string `json:"http_timeout"`
 }
 
 func LoadConfig(location string) (config Config, err error) {
-	file, error := os.Open(location)
-	if error != nil {
-		log.Println("error on config load: ", error)
-		return config, error
+	file, err := os.Open(location)
+	if err != nil {
+		log.Println("error on config load: ", err)
+		return config, err
 	}
 	decoder := json.NewDecoder(file)
-	error = decoder.Decode(&config)
-	if error != nil {
-		log.Println("invalid config json: ", error)
-		return config, error
+	err = decoder.Decode(&config)
+	if err != nil {
+		log.Println("invalid config json: ", err)
+		return config, err
 	}
 	handleEnvironmentVars(&config)
+	setDefaultHttpClient(config)
 	return config, nil
 }
 
@@ -114,5 +118,13 @@ func handleEnvironmentVars(config *Config) {
 				configValue.FieldByName(fieldName).Set(reflect.ValueOf(value))
 			}
 		}
+	}
+}
+
+func setDefaultHttpClient(config Config) {
+	var err error
+	http.DefaultClient.Timeout, err = time.ParseDuration(config.HttpTimeout)
+	if err != nil {
+		log.Println("WARNING: invalid http timeout --> no timeouts\n", err)
 	}
 }

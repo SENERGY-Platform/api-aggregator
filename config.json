@@ -9,5 +9,6 @@
   "process_deployment_url": "",
   "event_manager_url": "",
 
-  "use_annotations_for_connection_state": true
+  "use_annotations_for_connection_state": true,
+  "http_timeout": "30s"
 }
