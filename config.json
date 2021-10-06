@@ -10,5 +10,5 @@
   "event_manager_url": "",
 
   "use_annotations_for_connection_state": true,
-  "http_timeout": "30s"
+  "http_client_timeout": "30s"
 }
