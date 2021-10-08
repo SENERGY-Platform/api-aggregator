@@ -7,6 +7,7 @@ import (
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/api"
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/tests/environment"
 	"net"
+	"net/url"
 	"reflect"
 	"sort"
 	"strconv"
@@ -100,6 +101,16 @@ func TestDevicesEndpoint(t *testing.T) {
 			Name: "bar 3",
 		},
 	}))
+	t.Run(testDeviceQueryRaw(`?limit=2&after.id=`+url.QueryEscape("urn:ses:device:d5")+`&after.sort_field_value=`+url.QueryEscape(`"bar 2"`), serverPort, []environment.Device{
+		{
+			Id:   "urn:ses:device:d6",
+			Name: "bar 3",
+		},
+		{
+			Id:   "urn:ses:device:d7",
+			Name: "batz 1",
+		},
+	}))
 	t.Run(testDeviceQuery(`?limit=2&offset=1&search=foo`, serverPort, []environment.Device{
 		{
 			Id:   "urn:ses:device:d2",
@@ -177,6 +188,28 @@ func testDeviceQuery(query string, port string, expected []environment.Device) (
 	return query, func(t *testing.T) {
 		result := []environment.Device{}
 		err := pkg.GetJson(testjwt, "http://localhost:"+port+"/devices"+strings.ReplaceAll(query, ":", "%3A"), &result)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		sort.Slice(expected, func(i, j int) bool {
+			return expected[i].Name > expected[j].Name
+		})
+		sort.Slice(result, func(i, j int) bool {
+			return result[i].Name > result[j].Name
+		})
+		if !reflect.DeepEqual(result, expected) {
+			expectedJson, _ := json.Marshal(expected)
+			resultJson, _ := json.Marshal(result)
+			t.Error(string(resultJson), "\n", string(expectedJson))
+		}
+	}
+}
+
+func testDeviceQueryRaw(query string, port string, expected []environment.Device) (string, func(t *testing.T)) {
+	return query, func(t *testing.T) {
+		result := []environment.Device{}
+		err := pkg.GetJson(testjwt, "http://localhost:"+port+"/devices"+query, &result)
 		if err != nil {
 			t.Error(err)
 			return

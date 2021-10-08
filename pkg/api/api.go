@@ -86,6 +86,9 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 			return
 		}
 
+		afterId := r.URL.Query().Get("after.id")
+		afterSortValue := r.URL.Query().Get("after.sort_field_value")
+
 		token, err := auth.GetParsedToken(r)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusBadRequest)
@@ -93,7 +96,12 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		}
 
 		orderfeature, direction := getSortParts(sort)
-		result, err := lib.FindDevices(token, search, idList, intLimit, intOffset, orderfeature, direction, location, state)
+		var result []map[string]interface{}
+		if afterId != "" {
+			result, err = lib.FindDevicesAfter(token, search, idList, intLimit, afterId, afterSortValue, orderfeature, direction, location, state)
+		} else {
+			result, err = lib.FindDevices(token, search, idList, intLimit, intOffset, orderfeature, direction, location, state)
+		}
 		if err != nil {
 			log.Println("ERROR: ", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)

@@ -67,11 +67,17 @@ type QueryCheckIds struct {
 }
 
 type QueryListCommons struct {
-	Limit    int    `json:"limit"`
-	Offset   int    `json:"offset"`
-	Rights   string `json:"rights"`
-	SortBy   string `json:"sort_by"`
-	SortDesc bool   `json:"sort_desc"`
+	Limit    int        `json:"limit"`
+	Offset   int        `json:"offset"`
+	After    *ListAfter `json:"after"`
+	Rights   string     `json:"rights"`
+	SortBy   string     `json:"sort_by"`
+	SortDesc bool       `json:"sort_desc"`
+}
+
+type ListAfter struct {
+	SortFieldValue interface{} `json:"sort_field_value"`
+	Id             string      `json:"id"`
 }
 
 type QueryOperationType string

@@ -17,6 +17,7 @@
 package pkg
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
 	"log"
@@ -24,19 +25,12 @@ import (
 	"sort"
 )
 
-func (this *Lib) FindDevices(token auth.Token, search string, deviceIds []string, limit int, offset int, orderfeature string, direction string, location string, state string) (devices []map[string]interface{}, err error) {
+func (this *Lib) FindDevicesCommon(token auth.Token, search string, deviceIds []string, queryCommons QueryListCommons, location string, state string) (devices []map[string]interface{}, err error) {
 	var listIds *QueryListIds
 	var find *QueryFind
 
 	filterById := len(deviceIds) > 0 || location != ""
 
-	queryCommons := QueryListCommons{
-		Limit:    limit,
-		Offset:   offset,
-		Rights:   "r",
-		SortBy:   orderfeature,
-		SortDesc: direction == "desc",
-	}
 	filteredIds := []string{}
 	if location != "" {
 		locationDevices, err := this.GetDevicesInLocation(token, location)
@@ -113,6 +107,35 @@ func (this *Lib) FindDevices(token auth.Token, search string, deviceIds []string
 		return nil, err
 	}
 	return this.completeDeviceList(token, devices)
+}
+
+func (this *Lib) FindDevices(token auth.Token, search string, deviceIds []string, limit int, offset int, orderfeature string, direction string, location string, state string) (devices []map[string]interface{}, err error) {
+	queryCommons := QueryListCommons{
+		Limit:    limit,
+		Offset:   offset,
+		Rights:   "r",
+		SortBy:   orderfeature,
+		SortDesc: direction == "desc",
+	}
+	return this.FindDevicesCommon(token, search, deviceIds, queryCommons, location, state)
+}
+
+func (this *Lib) FindDevicesAfter(token auth.Token, search string, deviceIds []string, limit int, afterId string, afterSortValue string, orderfeature string, direction string, location string, state string) ([]map[string]interface{}, error) {
+	after := ListAfter{
+		Id: afterId,
+	}
+	err := json.Unmarshal([]byte(afterSortValue), &after.SortFieldValue)
+	if err != nil {
+		return nil, err
+	}
+	queryCommons := QueryListCommons{
+		Limit:    limit,
+		Rights:   "r",
+		SortBy:   orderfeature,
+		SortDesc: direction == "desc",
+		After:    &after,
+	}
+	return this.FindDevicesCommon(token, search, deviceIds, queryCommons, location, state)
 }
 
 func (this *Lib) SortByName(input []map[string]interface{}, sortAsc bool) (output []map[string]interface{}) {
