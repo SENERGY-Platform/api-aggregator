@@ -353,6 +353,49 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		json.NewEncoder(writer).Encode(result)
 	})
 
+	router.GET("/aspects/:id/measuring-functions", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+		// Get from semantic
+		id := params.ByName("id")
+		functions, err, code := lib.GetMeasuringFunctionsForAspect(token, id)
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(writer, err.Error(), code)
+			return
+		}
+
+		// Get from Permsearch (import-types)
+		importTypes, err, code := lib.GetImportTypesWithAspect(token, id)
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(writer, err.Error(), code)
+			return
+		}
+
+		additionalFunctionIds := []string{}
+		for _, importType := range importTypes {
+			for _, functionId := range importType.FunctionIds {
+				if !isInSlice(additionalFunctionIds, functionId) && !isFunctionLoaded(functions, functionId) {
+					additionalFunctionIds = append(additionalFunctionIds, functionId)
+				}
+			}
+		}
+		additionalFunctions, err, code := lib.GetMeasuringFunctions(token, additionalFunctionIds)
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		functions = append(functions, additionalFunctions...)
+
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		json.NewEncoder(writer).Encode(functions)
+	})
+
 	return
 
 }
@@ -375,4 +418,22 @@ func getSortParts(sort string) (orderfeature string, direction string) {
 		direction = parts[1]
 	}
 	return
+}
+
+func isFunctionLoaded(functions []pkg.Function, id string) bool {
+	for i := range functions {
+		if functions[i].Id == id {
+			return true
+		}
+	}
+	return false
+}
+
+func isInSlice(list []string, element string) bool {
+	for i := range list {
+		if list[i] == element {
+			return true
+		}
+	}
+	return false
 }

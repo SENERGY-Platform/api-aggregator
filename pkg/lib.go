@@ -46,6 +46,9 @@ type Interface interface {
 	GetDeviceTypeDevices(token auth.Token, id string, limit string, offset string, orderFeature string, direction string) (ids []string, err error)
 	FindDevices(token auth.Token, search string, list []string, limit int, offset int, orderfeature string, direction string, location string, state string) ([]map[string]interface{}, error)
 	FindDevicesAfter(token auth.Token, search string, list []string, limit int, afterId string, afterSortValue string, orderfeature string, direction string, location string, state string) ([]map[string]interface{}, error)
+	GetMeasuringFunctionsForAspect(token auth.Token, aspectId string) (functions []Function, err error, code int)
+	GetMeasuringFunctions(token auth.Token, functionIds []string) (functions []Function, err error, code int)
+	GetImportTypesWithAspect(token auth.Token, aspectId string) (importTypes []ImportTypePermissionSearch, err error, code int)
 }
 
 type Lib struct {
