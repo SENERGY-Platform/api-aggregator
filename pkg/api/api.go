@@ -39,6 +39,22 @@ func Start(lib pkg.Interface) {
 func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 	router = httprouter.New()
 
+	router.GET("/nested-function-infos", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+		result, err := lib.GetNestedFunctionInfos(token)
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		json.NewEncoder(writer).Encode(result)
+	})
+
 	/*
 		query-parameter:
 				search  {string}	filters by partial text match

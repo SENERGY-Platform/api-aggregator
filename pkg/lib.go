@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
+	"github.com/SmartEnergyPlatform/api-aggregator/pkg/model"
 	"io"
 	"net/http"
 	"net/url"
@@ -49,6 +50,7 @@ type Interface interface {
 	GetMeasuringFunctionsForAspect(token auth.Token, aspectId string) (functions []Function, err error, code int)
 	GetMeasuringFunctions(token auth.Token, functionIds []string) (functions []Function, err error, code int)
 	GetImportTypesWithAspect(token auth.Token, aspectId string) (importTypes []ImportTypePermissionSearch, err error, code int)
+	GetNestedFunctionInfos(token auth.Token) (result []model.FunctionInfo, err error)
 }
 
 type Lib struct {

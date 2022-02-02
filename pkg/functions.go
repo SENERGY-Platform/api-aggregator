@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
+	"github.com/SmartEnergyPlatform/api-aggregator/pkg/model"
 	"net/http"
 	"net/url"
 )
@@ -58,4 +59,71 @@ func (this *Lib) GetMeasuringFunctions(token auth.Token, functionIds []string) (
 		return nil, err, http.StatusInternalServerError
 	}
 	return functions, nil, http.StatusOK
+}
+
+type CharacteristicsWrapper struct {
+	Raw model.Characteristic `json:"raw"`
+}
+
+func (this *Lib) GetNestedFunctionInfos(token auth.Token) (result []model.FunctionInfo, err error) {
+	concepts := []model.Concept{}
+	err, _ = this.QueryPermissionsSearch(token.Jwt(), QueryMessage{
+		Resource: "concepts",
+		Find: &QueryFind{
+			QueryListCommons: QueryListCommons{
+				Limit:  9999,
+				Offset: 0,
+				Rights: "r",
+			},
+		},
+	}, &concepts)
+	if err != nil {
+		return result, err
+	}
+	characteristics := []CharacteristicsWrapper{}
+	err, _ = this.QueryPermissionsSearch(token.Jwt(), QueryMessage{
+		Resource: "characteristics",
+		Find: &QueryFind{
+			QueryListCommons: QueryListCommons{
+				Limit:  9999,
+				Offset: 0,
+				Rights: "r",
+			},
+		},
+	}, &characteristics)
+	if err != nil {
+		return result, err
+	}
+	err, _ = this.QueryPermissionsSearch(token.Jwt(), QueryMessage{
+		Resource: "functions",
+		Find: &QueryFind{
+			QueryListCommons: QueryListCommons{
+				Limit:  9999,
+				Offset: 0,
+				Rights: "r",
+			},
+		},
+	}, &result)
+	if err != nil {
+		return result, err
+	}
+
+	conceptIndex := map[string]model.Concept{}
+	for _, c := range concepts {
+		conceptIndex[c.Id] = c
+	}
+
+	characteristicsIndex := map[string]model.Characteristic{}
+	for _, c := range characteristics {
+		characteristicsIndex[c.Raw.Id] = c.Raw
+	}
+
+	for i, f := range result {
+		concept, ok := conceptIndex[f.ConceptId]
+		if ok {
+			f.Concept = model.ConceptInfo{Concept: concept, BaseCharacteristic: characteristicsIndex[concept.BaseCharacteristicId]}
+		}
+		result[i] = f
+	}
+	return result, nil
 }
