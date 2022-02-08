@@ -21,8 +21,11 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
+	"log"
 	"net/http"
 	"net/url"
+	"runtime/debug"
+	"strconv"
 )
 
 func (this *Lib) PermListGateways(token auth.Token, right string, limit string, offset string) (result []map[string]interface{}, err error) {
@@ -42,20 +45,26 @@ func (this *Lib) PermSearchGatewaysOrdered(token auth.Token, query string, right
 }
 
 func (this *Lib) PermDeviceIdList(token auth.Token, ids []string, right string) (result []map[string]interface{}, err error) {
-	return this.PermIdList(token, "devices", ids, right)
+	return this.PermSelectIds(token, "devices", right, ids)
 }
 
 func (this *Lib) PermDeviceIdListOrdered(token auth.Token, ids []string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
 	return this.PermIdListOrdered(token, "devices", ids, right, limit, offset, orderfeature, direction)
 }
 
-func (this *Lib) PermIdList(token auth.Token, kind string, ids []string, right string) (result []map[string]interface{}, err error) {
-	err = postJson(token.Token, this.config.PermissionsUrl+"/ids/select/"+url.PathEscape(kind)+"/"+right, ids, &result)
-	return
-}
-
 func (this *Lib) PermIdListOrdered(token auth.Token, kind string, ids []string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	err = postJson(token.Token, this.config.PermissionsUrl+"/ids/select/"+url.PathEscape(kind)+"/"+right+"/"+limit+"/"+offset+"/"+url.PathEscape(orderfeature)+"/"+direction, ids, &result)
+	err, _ = this.QueryPermissionsSearch(token.Token, QueryMessage{
+		Resource: kind,
+		ListIds: &QueryListIds{
+			QueryListCommons: QueryListCommons{
+				Limit:    len(ids),
+				Rights:   right,
+				SortBy:   orderfeature,
+				SortDesc: direction == "desc",
+			},
+			Ids: ids,
+		},
+	}, &result)
 	return
 }
 
@@ -64,7 +73,7 @@ func (this *Lib) PermListAllGateways(token auth.Token, right string) (result []m
 }
 
 func (this *Lib) PermListAll(token auth.Token, kind string, right string) (result []map[string]interface{}, err error) {
-	resp, err := get(token.Token, this.config.PermissionsUrl+"/jwt/list/"+url.PathEscape(kind)+"/"+right)
+	resp, err := get(token.Token, this.config.PermissionsUrl+"/v3/resources/:"+url.PathEscape(kind)+"?limit=9999&rights="+right)
 	if err != nil {
 		return result, err
 	}
@@ -77,74 +86,110 @@ func (this *Lib) PermListAll(token auth.Token, kind string, right string) (resul
 }
 
 func (this *Lib) PermList(token auth.Token, kind string, right string, limit string, offset string) (result []map[string]interface{}, err error) {
-	//"/jwt/list/:resource_kind/:right"
-	resp, err := get(token.Token, this.config.PermissionsUrl+"/jwt/list/"+url.PathEscape(kind)+"/"+right+"/"+limit+"/"+offset)
+	l, err := strconv.Atoi(limit)
 	if err != nil {
 		return result, err
 	}
-	if resp.StatusCode != http.StatusOK {
-		err = errors.New("access denied")
+	o, err := strconv.Atoi(offset)
+	if err != nil {
 		return result, err
 	}
-	err = json.NewDecoder(resp.Body).Decode(&result)
+	err, _ = this.QueryPermissionsSearch(token.Token, QueryMessage{
+		Resource: kind,
+		Find: &QueryFind{
+			QueryListCommons: QueryListCommons{
+				Limit:  l,
+				Offset: o,
+				Rights: right,
+			},
+		},
+	}, &result)
 	return
 }
 
 func (this *Lib) PermListOrdered(token auth.Token, kind string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	resp, err := get(token.Token, this.config.PermissionsUrl+"/jwt/list/"+url.PathEscape(kind)+"/"+right+"/"+limit+"/"+offset+"/"+url.PathEscape(orderfeature)+"/"+direction)
+	l, err := strconv.Atoi(limit)
 	if err != nil {
 		return result, err
 	}
-	if resp.StatusCode != http.StatusOK {
-		err = errors.New("access denied")
+	o, err := strconv.Atoi(offset)
+	if err != nil {
 		return result, err
 	}
-	err = json.NewDecoder(resp.Body).Decode(&result)
+	err, _ = this.QueryPermissionsSearch(token.Token, QueryMessage{
+		Resource: kind,
+		Find: &QueryFind{
+			QueryListCommons: QueryListCommons{
+				Limit:    l,
+				Offset:   o,
+				Rights:   right,
+				SortBy:   orderfeature,
+				SortDesc: direction == "desc",
+			},
+		},
+	}, &result)
 	return
 }
 
 func (this *Lib) PermSearch(token auth.Token, kind string, query string, right string, limit string, offset string) (result []map[string]interface{}, err error) {
-	//"/jwt/search/:resource_kind/:query/:right/:limit/:offset"
-	resp, err := get(token.Token, this.config.PermissionsUrl+"/jwt/search/"+url.PathEscape(kind)+"/"+url.PathEscape(query)+"/"+right+"/"+limit+"/"+offset)
+	l, err := strconv.Atoi(limit)
 	if err != nil {
 		return result, err
 	}
-	if resp.StatusCode != http.StatusOK {
-		err = errors.New("access denied")
+	o, err := strconv.Atoi(offset)
+	if err != nil {
 		return result, err
 	}
-	err = json.NewDecoder(resp.Body).Decode(&result)
+	err, _ = this.QueryPermissionsSearch(token.Token, QueryMessage{
+		Resource: kind,
+		Find: &QueryFind{
+			QueryListCommons: QueryListCommons{
+				Limit:  l,
+				Offset: o,
+				Rights: right,
+			},
+			Search: query,
+		},
+	}, &result)
 	return
 }
 
 func (this *Lib) PermSearchOrdered(token auth.Token, kind string, query string, right string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	resp, err := get(token.Token, this.config.PermissionsUrl+"/jwt/search/"+url.PathEscape(kind)+"/"+url.PathEscape(query)+"/"+right+"/"+limit+"/"+offset+"/"+url.PathEscape(orderfeature)+"/"+direction)
+	l, err := strconv.Atoi(limit)
 	if err != nil {
 		return result, err
 	}
-	if resp.StatusCode != http.StatusOK {
-		err = errors.New("access denied")
+	o, err := strconv.Atoi(offset)
+	if err != nil {
 		return result, err
 	}
-	err = json.NewDecoder(resp.Body).Decode(&result)
+	err, _ = this.QueryPermissionsSearch(token.Token, QueryMessage{
+		Resource: kind,
+		Find: &QueryFind{
+			QueryListCommons: QueryListCommons{
+				Limit:    l,
+				Offset:   o,
+				Rights:   right,
+				SortBy:   orderfeature,
+				SortDesc: direction == "desc",
+			},
+			Search: query,
+		},
+	}, &result)
 	return
 }
 
 func (this *Lib) PermSelectIds(token auth.Token, kind string, right string, ids []string) (result []map[string]interface{}, err error) {
-	b := new(bytes.Buffer)
-	err = json.NewEncoder(b).Encode(ids)
-	if err != nil {
-		return
-	}
-	resp, err := post(token.Token, this.config.PermissionsUrl+"/ids/select/"+url.PathEscape(kind)+"/"+right, "application/json", b)
-	if err != nil {
-		return result, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		err = errors.New("access denied")
-		return result, err
-	}
-	err = json.NewDecoder(resp.Body).Decode(&result)
+	err, _ = this.QueryPermissionsSearch(token.Token, QueryMessage{
+		Resource: kind,
+		ListIds: &QueryListIds{
+			QueryListCommons: QueryListCommons{
+				Limit:  len(ids),
+				Rights: right,
+			},
+			Ids: ids,
+		},
+	}, &result)
 	return
 }
 
@@ -164,4 +209,97 @@ func (this *Lib) PermCheck(token auth.Token, kind string, ids []string, right st
 	result = map[string]bool{}
 	err = postJson(token.Token, this.config.PermissionsUrl+"/ids/check/"+url.PathEscape(kind)+"/"+right, ids, &result)
 	return
+}
+
+func (this *Lib) QueryPermissionsSearch(token string, query QueryMessage, result interface{}) (err error, code int) {
+	requestBody := new(bytes.Buffer)
+	err = json.NewEncoder(requestBody).Encode(query)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	req, err := http.NewRequest("POST", this.config.PermissionsUrl+"/v3/query", requestBody)
+	if err != nil {
+		debug.PrintStack()
+		return err, http.StatusInternalServerError
+	}
+	req.Header.Set("Authorization", token)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		debug.PrintStack()
+		return err, http.StatusInternalServerError
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		err = errors.New(buf.String())
+		log.Println("ERROR: ", resp.StatusCode, err)
+		debug.PrintStack()
+		return err, resp.StatusCode
+	}
+	err = json.NewDecoder(resp.Body).Decode(result)
+	if err != nil {
+		debug.PrintStack()
+		return err, http.StatusInternalServerError
+	}
+
+	return nil, http.StatusOK
+}
+
+type QueryMessage struct {
+	Resource string         `json:"resource"`
+	Find     *QueryFind     `json:"find"`
+	ListIds  *QueryListIds  `json:"list_ids"`
+	CheckIds *QueryCheckIds `json:"check_ids"`
+}
+type QueryFind struct {
+	QueryListCommons
+	Search string     `json:"search"`
+	Filter *Selection `json:"filter"`
+}
+
+type QueryListIds struct {
+	QueryListCommons
+	Ids []string `json:"ids"`
+}
+
+type QueryCheckIds struct {
+	Ids    []string `json:"ids"`
+	Rights string   `json:"rights"`
+}
+
+type QueryListCommons struct {
+	Limit    int        `json:"limit"`
+	Offset   int        `json:"offset"`
+	After    *ListAfter `json:"after"`
+	Rights   string     `json:"rights"`
+	SortBy   string     `json:"sort_by"`
+	SortDesc bool       `json:"sort_desc"`
+}
+
+type ListAfter struct {
+	SortFieldValue interface{} `json:"sort_field_value"`
+	Id             string      `json:"id"`
+}
+
+type QueryOperationType string
+
+const (
+	QueryEqualOperation             QueryOperationType = "=="
+	QueryUnequalOperation           QueryOperationType = "!="
+	QueryAnyValueInFeatureOperation QueryOperationType = "any_value_in_feature"
+)
+
+type ConditionConfig struct {
+	Feature   string             `json:"feature"`
+	Operation QueryOperationType `json:"operation"`
+	Value     interface{}        `json:"value"`
+	Ref       string             `json:"ref"`
+}
+
+type Selection struct {
+	And       []Selection     `json:"and"`
+	Or        []Selection     `json:"or"`
+	Not       *Selection      `json:"not"`
+	Condition ConditionConfig `json:"condition"`
 }
