@@ -17,6 +17,7 @@
 package pkg
 
 import (
+	"errors"
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
 	"net/http"
 )
@@ -51,7 +52,10 @@ func (this *Lib) GetImportTypesWithAspect(token auth.Token, aspectId string) (im
 	if err != nil {
 		return nil, err, http.StatusBadGateway
 	}
-	ids := append(node[0].AncestorIds, node[0].Id)
+	if len(node) != 1 {
+		return nil, errors.New("unexpected length of reponse"), http.StatusBadGateway
+	}
+	ids := append(node[0].DescendentIds, node[0].Id)
 
 	err, code = this.QueryPermissionsSearch(token.Token, QueryMessage{
 		Resource: "import-types",
