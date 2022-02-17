@@ -17,9 +17,7 @@
 package pkg
 
 import (
-	"errors"
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
-	"net/http"
 )
 
 type ImportTypePermissionSearch struct {
@@ -47,16 +45,7 @@ type ImportTypePermissionSearch struct {
 	Shared bool `json:"shared"`
 }
 
-func (this *Lib) GetImportTypesWithAspect(token auth.Token, aspectId string) (importTypes []ImportTypePermissionSearch, err error, code int) {
-	node, err := this.GetAspectNodes([]string{aspectId}, token)
-	if err != nil {
-		return nil, err, http.StatusBadGateway
-	}
-	if len(node) != 1 {
-		return nil, errors.New("unexpected length of reponse"), http.StatusBadGateway
-	}
-	ids := append(node[0].DescendentIds, node[0].Id)
-
+func (this *Lib) GetImportTypesWithAspect(token auth.Token, aspectIds []string) (importTypes []ImportTypePermissionSearch, err error, code int) {
 	err, code = this.QueryPermissionsSearch(token.Token, QueryMessage{
 		Resource: "import-types",
 		Find: &QueryFind{
@@ -64,7 +53,7 @@ func (this *Lib) GetImportTypesWithAspect(token auth.Token, aspectId string) (im
 				Condition: ConditionConfig{
 					Feature:   "features.content_aspect_ids",
 					Operation: QueryAnyValueInFeatureOperation,
-					Value:     ids,
+					Value:     aspectIds,
 				}}},
 	}, &importTypes)
 	return importTypes, err, code

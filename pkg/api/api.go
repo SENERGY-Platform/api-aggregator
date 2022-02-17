@@ -386,7 +386,20 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		}
 
 		// Get from Permsearch (import-types)
-		importTypes, err, code := lib.GetImportTypesWithAspect(token, id)
+		node, err := lib.GetAspectNodes([]string{id}, token)
+		if err != nil {
+			log.Println("ERROR: ", err)
+			http.Error(writer, err.Error(), http.StatusBadGateway)
+			return
+		}
+		if len(node) != 1 {
+			log.Println("ERROR: ", err)
+			http.Error(writer, "unexpected length of reponse", http.StatusBadGateway)
+			return
+		}
+		ids := append(node[0].DescendentIds, node[0].Id)
+
+		importTypes, err, code := lib.GetImportTypesWithAspect(token, ids)
 		if err != nil {
 			log.Println("ERROR: ", err)
 			http.Error(writer, err.Error(), code)
@@ -395,8 +408,12 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 
 		additionalFunctionIds := []string{}
 		for _, importType := range importTypes {
-			for _, functionId := range importType.ContentFunctionIds {
-				if !isInSlice(additionalFunctionIds, functionId) && !isFunctionLoaded(functions, functionId) {
+			for _, aspectFunctionId := range importType.AspectFunctions {
+				parts := strings.Split(aspectFunctionId, "_")
+				aspectId := parts[0]
+				functionId := parts[1]
+
+				if isInSlice(ids, aspectId) && !isInSlice(additionalFunctionIds, functionId) && !isFunctionLoaded(functions, functionId) {
 					additionalFunctionIds = append(additionalFunctionIds, functionId)
 				}
 			}
