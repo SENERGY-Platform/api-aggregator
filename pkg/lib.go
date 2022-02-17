@@ -51,6 +51,9 @@ type Interface interface {
 	GetMeasuringFunctions(token auth.Token, functionIds []string) (functions []Function, err error, code int)
 	GetImportTypesWithAspect(token auth.Token, aspectId string) (importTypes []ImportTypePermissionSearch, err error, code int)
 	GetNestedFunctionInfos(token auth.Token) (result []model.FunctionInfo, err error)
+	GetAspectNodes(ids []string, token auth.Token) ([]model.AspectNode, error)
+	GetAspectNodesWithMeasuringFunction(token auth.Token) ([]model.AspectNode, error)
+	GetImportTypes(token auth.Token) (importTypes []ImportTypePermissionSearch, err error, code int)
 }
 
 type Lib struct {

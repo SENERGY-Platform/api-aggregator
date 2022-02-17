@@ -34,7 +34,7 @@ type Function struct {
 }
 
 func (this *Lib) GetMeasuringFunctionsForAspect(token auth.Token, aspectId string) (functions []Function, err error, code int) {
-	resp, err := get(token.Token, this.config.SemanticRepoUrl+"/aspects/"+url.PathEscape(aspectId)+"/measuring-functions")
+	resp, err := get(token.Token, this.config.IotUrl+"/aspects/"+url.PathEscape(aspectId)+"/measuring-functions")
 	if err != nil {
 		return nil, err, http.StatusBadGateway
 	}

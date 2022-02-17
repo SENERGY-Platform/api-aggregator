@@ -35,7 +35,6 @@ type Config struct {
 	IotUrl           string `json:"iot_url"`
 	ConnectionLogUrl string `json:"connection_log_url"`
 	PermissionsUrl   string `json:"permissions_url"`
-	SemanticRepoUrl  string `json:"semantic_repo_url"`
 
 	CamundaWrapperUrl                string `json:"camunda_wrapper_url"`
 	ProcessDeploymentUrl             string `json:"process_deployment_url"`

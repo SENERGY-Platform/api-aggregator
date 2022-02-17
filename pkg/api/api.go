@@ -21,6 +21,7 @@ import (
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg"
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/api/util"
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
+	"github.com/SmartEnergyPlatform/api-aggregator/pkg/model"
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
@@ -394,7 +395,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 
 		additionalFunctionIds := []string{}
 		for _, importType := range importTypes {
-			for _, functionId := range importType.FunctionIds {
+			for _, functionId := range importType.ContentFunctionIds {
 				if !isInSlice(additionalFunctionIds, functionId) && !isFunctionLoaded(functions, functionId) {
 					additionalFunctionIds = append(additionalFunctionIds, functionId)
 				}
@@ -410,6 +411,88 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		json.NewEncoder(writer).Encode(functions)
+	})
+
+	router.GET("/aspect-nodes", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		function := request.URL.Query().Get("function")
+		if function != "measuring-function" {
+			http.Error(writer, "May only use function=measuring-function", http.StatusBadRequest)
+			return
+		}
+
+		var result []model.AspectNode
+		var err error
+
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// Get for devices, ancestors already included
+		result, err = lib.GetAspectNodesWithMeasuringFunction(token)
+
+		aspectIds := []string{}
+		for _, r := range result {
+			aspectIds = append(aspectIds, r.Id)
+		}
+
+		// Get import types and prepare loading additional nodes
+		importTypes, err, code := lib.GetImportTypes(token)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		additionalAspectIds := []string{}
+		for _, t := range importTypes {
+			for _, aspectFunction := range t.AspectFunctions {
+				aspectId := strings.Split(aspectFunction, "_")[0]
+				if !isInSlice(aspectIds, aspectId) {
+					additionalAspectIds = append(additionalAspectIds, aspectId)
+					aspectIds = append(aspectIds, aspectId)
+				}
+			}
+		}
+
+		// Get additional nodes if needed
+		if len(additionalAspectIds) > 0 {
+			importTypeNodes, err := lib.GetAspectNodes(additionalAspectIds, token)
+			if err != nil {
+				log.Println("ERROR: ", err)
+				http.Error(writer, err.Error(), http.StatusBadGateway)
+				return
+			}
+			result = append(result, importTypeNodes...)
+
+			// Check for ancestors of additional nodes and prepare loading those
+			additionalAspectIds = []string{}
+			for _, node := range importTypeNodes {
+				for _, ancestorId := range node.AncestorIds {
+					if !isInSlice(aspectIds, ancestorId) {
+						additionalAspectIds = append(additionalAspectIds, ancestorId)
+						aspectIds = append(aspectIds, ancestorId)
+					}
+				}
+			}
+
+			// Load ancestors if needed
+			if len(additionalAspectIds) > 0 {
+				additionalNodes, err := lib.GetAspectNodes(additionalAspectIds, token)
+				if err != nil {
+					log.Println("ERROR: ", err)
+					http.Error(writer, err.Error(), http.StatusBadGateway)
+					return
+				}
+				result = append(result, additionalNodes...)
+			}
+		}
+
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		err = json.NewEncoder(writer).Encode(result)
+		if err != nil {
+			log.Println("ERROR: unable to encode response", err)
+		}
+		return
 	})
 
 	return
