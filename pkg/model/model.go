@@ -28,9 +28,10 @@ type Characteristic struct {
 }
 
 type Concept struct {
-	Id                   string `json:"id"`
-	Name                 string `json:"name"`
-	BaseCharacteristicId string `json:"base_characteristic_id"`
+	Id                   string   `json:"id"`
+	Name                 string   `json:"name"`
+	BaseCharacteristicId string   `json:"base_characteristic_id"`
+	CharacteristicIds    []string `json:"characteristic_ids"`
 }
 
 type ConceptInfo struct {
