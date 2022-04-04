@@ -54,6 +54,7 @@ type Interface interface {
 	GetAspectNodes(ids []string, token auth.Token) ([]model.AspectNode, error)
 	GetAspectNodesWithMeasuringFunction(token auth.Token) ([]model.AspectNode, error)
 	GetImportTypes(token auth.Token) (importTypes []ImportTypePermissionSearch, err error, code int)
+	GetDeviceClassUses(token auth.Token) (result interface{}, err error)
 }
 
 type Lib struct {

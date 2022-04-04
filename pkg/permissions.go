@@ -211,6 +211,34 @@ func (this *Lib) PermCheck(token auth.Token, kind string, ids []string, right st
 	return
 }
 
+func QueryPermissionSearchFindAll[T any](lib *Lib, token string, query QueryMessage, sortFieldValueGetter func(e T) interface{}, idGetter func(e T) string) (result []T, err error, code int) {
+	var after *ListAfter
+	temp := []T{}
+	limit := 9999
+	for {
+		if query.Find != nil {
+			query.Find.QueryListCommons.Limit = limit
+			query.Find.QueryListCommons.Offset = 0
+			query.Find.QueryListCommons.After = after
+		}
+		err, code = lib.QueryPermissionsSearch(token, query, &temp)
+		if err != nil {
+			return result, err, code
+		}
+		result = append(result, temp...)
+		if len(temp) < limit {
+			return result, nil, http.StatusOK
+		}
+		if len(temp) > 0 {
+			after = &ListAfter{
+				SortFieldValue: sortFieldValueGetter(temp[len(temp)-1]),
+				Id:             idGetter(temp[len(temp)-1]),
+			}
+		}
+		temp = []T{}
+	}
+}
+
 func (this *Lib) QueryPermissionsSearch(token string, query QueryMessage, result interface{}) (err error, code int) {
 	requestBody := new(bytes.Buffer)
 	err = json.NewEncoder(requestBody).Encode(query)
