@@ -20,12 +20,25 @@ type Characteristic struct {
 	Id                 string           `json:"id"`
 	Name               string           `json:"name"`
 	DisplayUnit        string           `json:"display_unit"`
-	Type               string           `json:"type"`
+	Type               Type             `json:"type"`
 	MinValue           interface{}      `json:"min_value,omitempty"`
 	MaxValue           interface{}      `json:"max_value,omitempty"`
+	AllowedValues      []interface{}    `json:"allowed_values"`
 	Value              interface{}      `json:"value,omitempty"`
 	SubCharacteristics []Characteristic `json:"sub_characteristics"`
 }
+
+type Type string
+
+const (
+	String  Type = "https://schema.org/Text"
+	Integer Type = "https://schema.org/Integer"
+	Float   Type = "https://schema.org/Float"
+	Boolean Type = "https://schema.org/Boolean"
+
+	List      Type = "https://schema.org/ItemList"
+	Structure Type = "https://schema.org/StructuredValue"
+)
 
 type Concept struct {
 	Id                   string   `json:"id"`
