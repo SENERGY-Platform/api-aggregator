@@ -76,6 +76,11 @@ func TestDevicesEndpoint(t *testing.T) {
 			Id:   "urn:ses:device:d9",
 			Name: "batz 3",
 		},
+
+		{
+			Id:   "urn:ses:device:d99",
+			Name: "plug Kühlschrank Backofen",
+		},
 	}
 
 	location := environment.Location{
@@ -182,6 +187,28 @@ func TestDevicesEndpoint(t *testing.T) {
 			Name: "bar 1",
 		},
 	}))
+
+	t.Run(testDeviceQuery(`?search=küh`, serverPort, []environment.Device{
+		{
+			Id:   "urn:ses:device:d99",
+			Name: "plug Kühlschrank Backofen",
+		},
+	}))
+
+	t.Run(testDeviceQuery(`?search=back`, serverPort, []environment.Device{
+		{
+			Id:   "urn:ses:device:d99",
+			Name: "plug Kühlschrank Backofen",
+		},
+	}))
+
+	t.Run(testDeviceQuery(`?search=`+url.QueryEscape("küh"), serverPort, []environment.Device{
+		{
+			Id:   "urn:ses:device:d99",
+			Name: "plug Kühlschrank Backofen",
+		},
+	}))
+
 }
 
 func testDeviceQuery(query string, port string, expected []environment.Device) (string, func(t *testing.T)) {
@@ -193,10 +220,10 @@ func testDeviceQuery(query string, port string, expected []environment.Device) (
 			return
 		}
 		sort.Slice(expected, func(i, j int) bool {
-			return expected[i].Name > expected[j].Name
+			return expected[i].Name < expected[j].Name
 		})
 		sort.Slice(result, func(i, j int) bool {
-			return result[i].Name > result[j].Name
+			return result[i].Name < result[j].Name
 		})
 		if !reflect.DeepEqual(result, expected) {
 			expectedJson, _ := json.Marshal(expected)

@@ -1,9 +1,9 @@
 module github.com/SmartEnergyPlatform/api-aggregator
 
-go 1.18
+go 1.20
 
 require (
-	github.com/golang-jwt/jwt v3.2.1+incompatible
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/ory/dockertest/v3 v3.6.3
 	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414 // indirect
