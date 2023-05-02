@@ -19,10 +19,13 @@ package pkg
 import (
 	"encoding/json"
 	"errors"
+	"github.com/SENERGY-Platform/permission-search/lib/client"
+	"github.com/SENERGY-Platform/permission-search/lib/model"
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
 	"log"
 	"runtime/debug"
 	"sort"
+	"strconv"
 )
 
 func (this *Lib) FindDevicesCommon(token auth.Token, search string, deviceIds []string, queryCommons QueryListCommons, location string, state string) (devices []map[string]interface{}, err error) {
@@ -394,11 +397,33 @@ func (this *Lib) getDeviceDeviceTypeInfos(token auth.Token, devices []map[string
 }
 
 func (this *Lib) GetDeviceTypeDevices(token auth.Token, id string, limit string, offset string, orderFeature string, direction string) (ids []string, err error) {
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		return ids, err
+	}
+	offsetInt, err := strconv.Atoi(offset)
+	if err != nil {
+		return ids, err
+	}
 	type device struct {
 		Id string `json:"id"`
 	}
-	var devices []device
-	err = GetJson(token.Token, this.config.PermissionsUrl+"/jwt/select/devices/device_type_id/"+id+"/r/"+limit+"/"+offset+"/"+orderFeature+"/"+direction, &devices)
+	devices, err := client.List[[]device](this.permissionsearch, token.Jwt(), "devices", client.ListOptions{
+		QueryListCommons: model.QueryListCommons{
+			Limit:    limitInt,
+			Offset:   offsetInt,
+			Rights:   "r",
+			SortBy:   orderFeature,
+			SortDesc: direction == "desc",
+		},
+		Selection: &model.FeatureSelection{
+			Feature: "device_type_id",
+			Value:   id,
+		},
+	})
+	if err != nil {
+		return ids, err
+	}
 
 	for _, d := range devices {
 		ids = append(ids, d.Id)

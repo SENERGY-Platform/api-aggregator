@@ -48,7 +48,7 @@ func New(ctx context.Context, wg *sync.WaitGroup) (permSearchUrl string, publish
 		return "", nil, err
 	}
 
-	_, permIp, err := docker.PermSearch(ctx, wg, kafkaUrl, elasticIp)
+	_, permIp, err := docker.PermSearch(ctx, wg, false, kafkaUrl, elasticIp)
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()

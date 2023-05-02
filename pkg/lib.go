@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/SENERGY-Platform/permission-search/lib/client"
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/model"
 	"io"
@@ -58,7 +59,8 @@ type Interface interface {
 }
 
 type Lib struct {
-	config Config
+	config           Config
+	permissionsearch client.Client
 }
 
 func (this *Lib) Config() Config {
@@ -66,7 +68,7 @@ func (this *Lib) Config() Config {
 }
 
 func New(config Config) *Lib {
-	return &Lib{config: config}
+	return &Lib{config: config, permissionsearch: client.NewClient(config.PermissionsUrl)}
 }
 
 func post(token string, url string, contentType string, body io.Reader) (resp *http.Response, err error) {
