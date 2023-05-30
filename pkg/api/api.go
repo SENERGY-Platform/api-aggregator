@@ -18,15 +18,16 @@ package api
 
 import (
 	"encoding/json"
+	"log"
+	"net/http"
+	"strconv"
+	"strings"
+
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg"
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/api/util"
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
 	"github.com/SmartEnergyPlatform/api-aggregator/pkg/model"
 	"github.com/julienschmidt/httprouter"
-	"log"
-	"net/http"
-	"strconv"
-	"strings"
 )
 
 func Start(lib pkg.Interface) {
@@ -544,11 +545,10 @@ func limitOffsetDefault(limit, offset string) (string, string) {
 }
 
 func getSortParts(sort string) (orderfeature string, direction string) {
-	parts := strings.Split(sort, ".")
-	orderfeature = parts[0]
+	orderfeature = strings.TrimSuffix(strings.TrimSuffix(sort, ".desc"), ".asc")
 	direction = "asc"
-	if len(parts) > 1 {
-		direction = parts[1]
+	if strings.HasSuffix(sort, ".desc") {
+		direction = "desc"
 	}
 	return
 }
