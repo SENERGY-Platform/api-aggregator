@@ -41,14 +41,14 @@ func New(ctx context.Context, wg *sync.WaitGroup) (permSearchUrl string, publish
 		return "", nil, err
 	}
 
-	_, elasticIp, err := docker.ElasticSearch(ctx, wg)
+	_, searchIp, err := docker.OpenSearch(ctx, wg)
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()
 		return "", nil, err
 	}
 
-	_, permIp, err := docker.PermSearch(ctx, wg, false, kafkaUrl, elasticIp)
+	_, permIp, err := docker.PermSearch(ctx, wg, false, kafkaUrl, searchIp)
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()
