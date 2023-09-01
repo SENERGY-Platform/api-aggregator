@@ -3,9 +3,9 @@ package tests
 import (
 	"context"
 	"encoding/json"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg/api"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg/tests/environment"
+	"github.com/SENERGY-Platform/api-aggregator/pkg"
+	"github.com/SENERGY-Platform/api-aggregator/pkg/api"
+	"github.com/SENERGY-Platform/api-aggregator/pkg/tests/environment"
 	"net"
 	"net/url"
 	"reflect"

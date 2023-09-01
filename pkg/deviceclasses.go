@@ -17,8 +17,8 @@
 package pkg
 
 import (
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg/model"
+	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
+	"github.com/SENERGY-Platform/api-aggregator/pkg/model"
 )
 
 func (this *Lib) GetDeviceClassUses(token auth.Token) (result interface{}, err error) {

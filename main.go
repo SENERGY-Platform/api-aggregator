@@ -19,8 +19,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg/api"
+	"github.com/SENERGY-Platform/api-aggregator/pkg"
+	"github.com/SENERGY-Platform/api-aggregator/pkg/api"
 	"log"
 )
 

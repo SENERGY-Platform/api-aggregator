@@ -17,7 +17,7 @@
 package pkg
 
 import (
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
+	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
 	"log"
 )
 

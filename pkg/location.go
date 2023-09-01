@@ -2,7 +2,7 @@ package pkg
 
 import (
 	"errors"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
+	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
 )
 
 func (this *Lib) GetDevicesInLocation(token auth.Token, location string) (deviceIds []string, err error) {

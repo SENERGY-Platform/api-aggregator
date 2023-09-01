@@ -1,4 +1,4 @@
-module github.com/SmartEnergyPlatform/api-aggregator
+module github.com/SENERGY-Platform/api-aggregator
 
 go 1.21
 

@@ -23,10 +23,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg/api/util"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg/model"
+	"github.com/SENERGY-Platform/api-aggregator/pkg"
+	"github.com/SENERGY-Platform/api-aggregator/pkg/api/util"
+	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
+	"github.com/SENERGY-Platform/api-aggregator/pkg/model"
 	"github.com/julienschmidt/httprouter"
 )
 

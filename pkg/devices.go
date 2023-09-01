@@ -19,9 +19,9 @@ package pkg
 import (
 	"encoding/json"
 	"errors"
+	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
 	"github.com/SENERGY-Platform/permission-search/lib/client"
 	"github.com/SENERGY-Platform/permission-search/lib/model"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
 	"log"
 	"runtime/debug"
 	"sort"

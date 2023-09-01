@@ -18,7 +18,7 @@ package environment
 
 import (
 	"context"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg/tests/environment/docker"
+	"github.com/SENERGY-Platform/api-aggregator/pkg/tests/environment/docker"
 	"log"
 	"runtime/debug"
 	"sync"

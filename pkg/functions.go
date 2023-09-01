@@ -19,8 +19,8 @@ package pkg
 import (
 	"encoding/json"
 	"errors"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg/auth"
-	"github.com/SmartEnergyPlatform/api-aggregator/pkg/model"
+	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
+	"github.com/SENERGY-Platform/api-aggregator/pkg/model"
 	"net/http"
 	"net/url"
 )
