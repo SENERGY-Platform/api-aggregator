@@ -11,8 +11,8 @@ require (
 )
 
 require (
-	github.com/SENERGY-Platform/permission-search v0.0.6
-	github.com/SENERGY-Platform/service-commons v0.0.0-20240313123621-ce10fbe36496
+	github.com/SENERGY-Platform/permission-search v0.0.7
+	github.com/SENERGY-Platform/service-commons v0.0.0-20240314112519-5bde66831b0d
 )
 
 require (
