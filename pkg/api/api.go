@@ -18,6 +18,7 @@ package api
 
 import (
 	"encoding/json"
+	"github.com/SENERGY-Platform/service-commons/pkg/accesslog"
 	"log"
 	"net/http"
 	"strconv"
@@ -34,7 +35,7 @@ func Start(lib pkg.Interface) {
 	log.Println("start server on port: ", lib.Config().ServerPort)
 	httpHandler := getRoutes(lib)
 	corseHandler := util.NewCors(httpHandler)
-	logger := util.NewLogger(corseHandler)
+	logger := accesslog.New(corseHandler)
 	log.Println(http.ListenAndServe(":"+lib.Config().ServerPort, logger))
 }
 

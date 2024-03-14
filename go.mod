@@ -10,7 +10,10 @@ require (
 	github.com/wvanbergen/kazoo-go v0.0.0-20180202103751-f72d8611297a
 )
 
-require github.com/SENERGY-Platform/permission-search v0.0.5
+require (
+	github.com/SENERGY-Platform/permission-search v0.0.6
+	github.com/SENERGY-Platform/service-commons v0.0.0-20240313123621-ce10fbe36496
+)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
