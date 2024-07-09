@@ -101,9 +101,15 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		if ids != "" {
 			idList = strings.Split(strings.Replace(ids, " ", "", -1), ",")
 		}
+
+		afterId := r.URL.Query().Get("after.id")
+
 		limit, offset = limitOffsetDefault(limit, offset)
 		if sort == "" {
 			sort = "name"
+			if afterId != "" {
+				sort = "id"
+			}
 		}
 
 		intLimit, err := strconv.Atoi(limit)
@@ -119,11 +125,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 			log.Println("ERROR: ", err)
 			http.Error(res, "offset is not a number: "+err.Error(), http.StatusBadRequest)
 			return
-			return
 		}
-
-		afterId := r.URL.Query().Get("after.id")
-		afterSortValue := r.URL.Query().Get("after.sort_field_value")
 
 		token, err := auth.GetParsedToken(r)
 		if err != nil {
@@ -134,7 +136,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		orderfeature, direction := getSortParts(sort)
 		var result []map[string]interface{}
 		if afterId != "" {
-			result, err = lib.FindDevicesAfter(token, search, idList, intLimit, afterId, afterSortValue, orderfeature, direction, location, state)
+			result, err = lib.FindDevicesAfter(token, search, idList, intLimit, afterId, orderfeature, direction, location, state)
 		} else {
 			result, err = lib.FindDevices(token, search, idList, intLimit, intOffset, orderfeature, direction, location, state)
 		}

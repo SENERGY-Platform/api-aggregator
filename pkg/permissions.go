@@ -209,7 +209,7 @@ func (this *Lib) PermCheck(token auth.Token, kind string, ids []string, right st
 	return
 }
 
-func QueryPermissionSearchFindAll[T any](lib *Lib, token string, query QueryMessage, sortFieldValueGetter func(e T) interface{}, idGetter func(e T) string) (result []T, err error, code int) {
+func QueryPermissionSearchFindAll[T any](lib *Lib, token string, query QueryMessage, idGetter func(e T) string) (result []T, err error, code int) {
 	var after *ListAfter
 	temp := []T{}
 	limit := 9999
@@ -229,8 +229,7 @@ func QueryPermissionSearchFindAll[T any](lib *Lib, token string, query QueryMess
 		}
 		if len(temp) > 0 {
 			after = &ListAfter{
-				SortFieldValue: sortFieldValueGetter(temp[len(temp)-1]),
-				Id:             idGetter(temp[len(temp)-1]),
+				Id: idGetter(temp[len(temp)-1]),
 			}
 		}
 		temp = []T{}

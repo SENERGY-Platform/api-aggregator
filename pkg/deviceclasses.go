@@ -28,11 +28,9 @@ func (this *Lib) GetDeviceClassUses(token auth.Token) (result interface{}, err e
 		Find: &QueryFind{
 			QueryListCommons: QueryListCommons{
 				Rights: "r",
-				SortBy: "name",
+				SortBy: "id",
 			},
 		},
-	}, func(e model.ShortDevice) interface{} {
-		return e.Name
 	}, func(e model.ShortDevice) string {
 		return e.Id
 	})

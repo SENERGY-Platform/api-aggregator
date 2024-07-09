@@ -106,7 +106,7 @@ func TestDevicesEndpoint(t *testing.T) {
 			Name: "bar 3",
 		},
 	}))
-	t.Run(testDeviceQueryRaw(`?limit=2&after.id=`+url.QueryEscape("urn:ses:device:d5")+`&after.sort_field_value=`+url.QueryEscape(`"bar 2"`), serverPort, []environment.Device{
+	t.Run(testDeviceQueryRaw(`?limit=2&after.id=`+url.QueryEscape("urn:ses:device:d5"), serverPort, []environment.Device{
 		{
 			Id:   "urn:ses:device:d6",
 			Name: "bar 3",

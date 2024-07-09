@@ -17,7 +17,6 @@
 package pkg
 
 import (
-	"encoding/json"
 	"errors"
 	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
 	"github.com/SENERGY-Platform/permission-search/lib/client"
@@ -123,13 +122,9 @@ func (this *Lib) FindDevices(token auth.Token, search string, deviceIds []string
 	return this.FindDevicesCommon(token, search, deviceIds, queryCommons, location, state)
 }
 
-func (this *Lib) FindDevicesAfter(token auth.Token, search string, deviceIds []string, limit int, afterId string, afterSortValue string, orderfeature string, direction string, location string, state string) ([]map[string]interface{}, error) {
+func (this *Lib) FindDevicesAfter(token auth.Token, search string, deviceIds []string, limit int, afterId string, orderfeature string, direction string, location string, state string) ([]map[string]interface{}, error) {
 	after := ListAfter{
 		Id: afterId,
-	}
-	err := json.Unmarshal([]byte(afterSortValue), &after.SortFieldValue)
-	if err != nil {
-		return nil, err
 	}
 	queryCommons := QueryListCommons{
 		Limit:    limit,
