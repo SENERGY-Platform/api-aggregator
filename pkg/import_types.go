@@ -18,55 +18,64 @@ package pkg
 
 import (
 	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
+	importRepo "github.com/SENERGY-Platform/import-repository/lib/client"
+	"github.com/SENERGY-Platform/import-repository/lib/model"
 )
 
-type ImportTypePermissionSearch struct {
-	AspectFunctions    []string `json:"aspect_functions"`
-	ContentAspectIds   []string `json:"content_aspect_ids"`
-	Creator            string   `json:"creator"`
-	DefaultRestart     bool     `json:"default_restart"`
-	Description        string   `json:"description"`
-	ContentFunctionIds []string `json:"content_function_ids"`
-	Id                 string   `json:"id"`
-	Image              string   `json:"image"`
-	Name               string   `json:"name"`
-	PermissionHolders  struct {
-		AdminUsers   []string `json:"admin_users"`
-		ExecuteUsers []string `json:"execute_users"`
-		ReadUsers    []string `json:"read_users"`
-		WriteUsers   []string `json:"write_users"`
-	} `json:"permission_holders"`
-	Permissions struct {
-		A bool `json:"a"`
-		R bool `json:"r"`
-		W bool `json:"w"`
-		X bool `json:"x"`
-	} `json:"permissions"`
-	Shared bool `json:"shared"`
+type ImportTypeWithCriteria struct {
+	model.ImportType
+	Criteria []ImportTypeCriteria
 }
 
-func (this *Lib) GetImportTypesWithAspect(token auth.Token, aspectIds []string) (importTypes []ImportTypePermissionSearch, err error, code int) {
-	err, code = this.QueryPermissionsSearch(token.Token, QueryMessage{
-		Resource: "import-types",
-		Find: &QueryFind{
-			Filter: &Selection{
-				Condition: ConditionConfig{
-					Feature:   "features.content_aspect_ids",
-					Operation: QueryAnyValueInFeatureOperation,
-					Value:     aspectIds,
-				}}},
-	}, &importTypes)
+type ImportTypeCriteria struct {
+	FunctionId string
+	AspectId   string
+}
+
+func (this *Lib) GetImportTypesWithAspect(token auth.Token, aspectIds []string) (importTypes []ImportTypeWithCriteria, err error, code int) {
+	temp, _, err, code := this.importRepo.ListImportTypes(token, importRepo.ImportTypeListOptions{
+		Limit:    9999,
+		Offset:   0,
+		SortBy:   "name.asc",
+		Criteria: []model.ImportTypeFilterCriteria{{AspectIds: aspectIds}},
+	})
+	if err != nil {
+		return nil, err, code
+	}
+	for _, t := range temp {
+		importTypes = append(importTypes, ImportTypeWithCriteria{
+			ImportType: t,
+			Criteria:   importTypeContentVariableToCertList(t.Output),
+		})
+	}
 	return importTypes, err, code
 }
 
-func (this *Lib) GetImportTypes(token auth.Token) (importTypes []ImportTypePermissionSearch, err error, code int) {
-	err, code = this.QueryPermissionsSearch(token.Token, QueryMessage{
-		Resource: "import-types",
-		Find: &QueryFind{
-			QueryListCommons: QueryListCommons{
-				Limit: 9999,
-			},
-		},
-	}, &importTypes)
+func importTypeContentVariableToCertList(cv model.ContentVariable) []ImportTypeCriteria {
+	result := []ImportTypeCriteria{{
+		FunctionId: cv.FunctionId,
+		AspectId:   cv.AspectId,
+	}}
+	for _, sub := range cv.SubContentVariables {
+		result = append(result, importTypeContentVariableToCertList(sub)...)
+	}
+	return result
+}
+
+func (this *Lib) GetImportTypes(token auth.Token) (importTypes []ImportTypeWithCriteria, err error, code int) {
+	temp, _, err, code := this.importRepo.ListImportTypes(token, importRepo.ImportTypeListOptions{
+		Limit:  9999,
+		Offset: 0,
+		SortBy: "name.asc",
+	})
+	if err != nil {
+		return nil, err, code
+	}
+	for _, t := range temp {
+		importTypes = append(importTypes, ImportTypeWithCriteria{
+			ImportType: t,
+			Criteria:   importTypeContentVariableToCertList(t.Output),
+		})
+	}
 	return importTypes, err, code
 }

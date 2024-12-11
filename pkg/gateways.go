@@ -17,25 +17,13 @@
 package pkg
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
+	"github.com/SENERGY-Platform/device-repository/lib/client"
+	"github.com/SENERGY-Platform/models/go/models"
 	"log"
-	"net/http"
-	"net/url"
-	"runtime/debug"
 )
-
-func (this *Lib) GetGatewaysHistory(token auth.Token, duration string) (result []map[string]interface{}, err error) {
-	result, err = this.PermListAllGateways(token, "r")
-	if err != nil {
-		log.Println("ERROR PermListAllGateways()", err)
-		return result, err
-	}
-	result, err = this.CompleteGatewayHistory(token, duration, result)
-	return
-}
 
 func (this *Lib) CompleteGatewayHistory(token auth.Token, duration string, gateways []map[string]interface{}) (result []map[string]interface{}, err error) {
 	ids := []string{}
@@ -54,33 +42,18 @@ func (this *Lib) CompleteGatewayHistory(token auth.Token, duration string, gatew
 		ids = append(ids, idStr)
 		gatewayMap[idStr] = gateway
 	}
-	logStates, err := this.GetGatewayLogStates(token, ids)
-	if err != nil {
-		log.Println("ERROR completeGatewayList.GetGatewayLogStates()", err)
-		return result, err
-	}
 	logHistory, err := this.GetGatewayLogHistory(token, ids, duration)
 	if err != nil {
-		log.Println("ERROR completeGatewayList.GetGatewayLogHistory()", err)
+		log.Println("ERROR legacyHubTransformations.GetGatewayLogHistory()", err)
 		return result, err
 	}
 	logEdges, err := this.GetLogedges(token, "gateway", ids, duration)
 	if err != nil {
-		log.Println("ERROR completeDeviceList.GetLogedges()", err)
+		log.Println("ERROR legacyDeviceTransformations.GetLogedges()", err)
 		return result, err
 	}
 	for _, id := range ids {
 		gateway := gatewayMap[id]
-		logState, logExists := logStates[id]
-		if !logExists {
-			gateway["log_state"] = "unknown"
-		} else {
-			if logState {
-				gateway["log_state"] = "connected"
-			} else {
-				gateway["log_state"] = "disconnected"
-			}
-		}
 		gateway["log_history"] = logHistory[id]
 		gateway["log_edge"] = logEdges[id]
 		result = append(result, gateway)
@@ -88,102 +61,57 @@ func (this *Lib) CompleteGatewayHistory(token auth.Token, duration string, gatew
 	return
 }
 
-func (this *Lib) ListGateways(token auth.Token, limit string, offset string) (result []map[string]interface{}, err error) {
-	gateways, err := this.PermListGateways(token, "r", limit, offset)
+func (this *Lib) ListGateways(token auth.Token, limit int64, offset int64) (result []map[string]interface{}, err error) {
+	hubs, _, err, _ := this.deviceRepo.ListExtendedHubs(token.Jwt(), client.HubListOptions{
+		Limit:      limit,
+		Offset:     offset,
+		SortBy:     "name.asc",
+		Permission: client.READ,
+	})
 	if err != nil {
-		log.Println("ERROR ListGateways.PermListGateways()", err)
-		return result, err
+		return nil, err
 	}
-	return this.completeGatewayList(token, gateways)
+	return this.legacyHubTransformations(token, hubs)
 }
 
 func (this *Lib) ListAllGateways(token auth.Token) (result []map[string]interface{}, err error) {
-	return this.PermListAllGateways(token, "r")
-}
-
-func (this *Lib) ListGatewaysOrdered(token auth.Token, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	gateways, err := this.PermListGatewaysOrdered(token, "r", limit, offset, orderfeature, direction)
-	if err != nil {
-		log.Println("ERROR ListGateways.PermListGateways()", err)
-		return result, err
-	}
-	return this.completeGatewayList(token, gateways)
-}
-
-func (this *Lib) SearchGateways(token auth.Token, query string, limit string, offset string) (result []map[string]interface{}, err error) {
-	gateways, err := this.PermSearchGateways(token, query, "r", limit, offset)
-	if err != nil {
-		return result, err
-	}
-	return this.completeGatewayList(token, gateways)
-}
-
-func (this *Lib) SearchGatewaysOrdered(token auth.Token, query string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error) {
-	gateways, err := this.PermSearchGatewaysOrdered(token, query, "r", limit, offset, orderfeature, direction)
-	if err != nil {
-		return result, err
-	}
-	return this.completeGatewayList(token, gateways)
-}
-
-func (this *Lib) completeGatewayList(token auth.Token, gateways []map[string]interface{}) (result []map[string]interface{}, err error) {
-	ids := []string{}
-	gatewayMap := map[string]map[string]interface{}{}
-	for _, gateway := range gateways {
-		id, ok := gateway["id"]
-		if !ok {
-			err = errors.New("unable to get gateway id")
-			return
+	var limit int64 = 0
+	var offset int64 = 0
+	for {
+		temp, err := this.ListGateways(token, limit, offset)
+		if err != nil {
+			return nil, err
 		}
-		idStr, ok := id.(string)
-		if !ok {
-			err = errors.New("unable to cast gateway id to string")
-			return
+		result = append(result, temp...)
+		if int64(len(temp)) < limit {
+			return result, nil
 		}
-		ids = append(ids, idStr)
-		gatewayMap[idStr] = gateway
 	}
-	logStates, err := this.GetGatewayLogStates(token, ids)
-	if err != nil {
-		log.Println("ERROR completeGatewayList.GetGatewayLogStates()", err)
-		return result, err
-	}
-	for _, id := range ids {
-		gateway := gatewayMap[id]
-		logState, logExists := logStates[id]
-		if logExists {
-			gateway["log_state"] = logState
+}
+
+func (this *Lib) legacyHubTransformations(token auth.Token, hubs []models.ExtendedHub) (result []map[string]interface{}, err error) {
+	for _, hub := range hubs {
+		element := map[string]interface{}{}
+		temp, err := json.Marshal(hub)
+		if err != nil {
+			return nil, err
 		}
-		//gateway["gateway_name"] = gateways[id]
-		result = append(result, gateway)
+		err = json.Unmarshal(temp, &element)
+		if err != nil {
+			return nil, err
+		}
+		switch hub.ConnectionState {
+		case *client.ConnectionStateOnline:
+			element["log_state"] = "connected"
+		case *client.ConnectionStateOffline:
+			element["log_state"] = "disconnected"
+		case *client.ConnectionStateUnknown:
+			element["log_state"] = "unknown"
+		default:
+			element["log_state"] = "unknown"
+		}
+		//TODO: perm-search transformations for creator, permissions etc
+		result = append(result, element)
 	}
 	return
-}
-
-func (this *Lib) GetGatewayDevices(token auth.Token, id string) (ids []string, err error) {
-	req, err := http.NewRequest("GET", this.config.IotUrl+"/hubs/"+url.PathEscape(id)+"/devices?as=id", nil)
-	if err != nil {
-		debug.PrintStack()
-		return ids, err
-	}
-	req.Header.Set("Authorization", token.Token)
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		debug.PrintStack()
-		return ids, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode >= 300 {
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(resp.Body)
-		err = errors.New(buf.String())
-		debug.PrintStack()
-		return ids, err
-	}
-	err = json.NewDecoder(resp.Body).Decode(&ids)
-	if err != nil {
-		debug.PrintStack()
-		return ids, err
-	}
-	return ids, nil
 }

@@ -21,6 +21,7 @@ import (
 	"errors"
 	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
 	"github.com/SENERGY-Platform/api-aggregator/pkg/model"
+	"github.com/SENERGY-Platform/device-repository/lib/client"
 	"net/http"
 	"net/url"
 )
@@ -46,84 +47,27 @@ func (this *Lib) GetMeasuringFunctionsForAspect(token auth.Token, aspectId strin
 }
 
 func (this *Lib) GetMeasuringFunctions(token auth.Token, functionIds []string) (functions []Function, err error, code int) {
-	m, err := this.PermSelectIds(token, "functions", "r", functionIds)
+	temp, _, err, _ := this.deviceRepo.ListFunctions(client.FunctionListOptions{
+		Ids:    functionIds,
+		Limit:  int64(len(functionIds)),
+		Offset: 0,
+		SortBy: "name.asc",
+	})
 	if err != nil {
 		return nil, err, http.StatusInternalServerError
 	}
-	b, err := json.Marshal(m)
-	if err != nil {
-		return nil, err, http.StatusInternalServerError
-	}
-	err = json.Unmarshal(b, &functions)
-	if err != nil {
-		return nil, err, http.StatusInternalServerError
+	for _, function := range temp {
+		functions = append(functions, Function{
+			Id:          function.Id,
+			Name:        function.Name,
+			Description: function.Description,
+			ConceptId:   function.ConceptId,
+			RdfType:     function.RdfType,
+		})
 	}
 	return functions, nil, http.StatusOK
 }
 
 type CharacteristicsWrapper struct {
 	Raw model.Characteristic `json:"raw"`
-}
-
-func (this *Lib) GetNestedFunctionInfos(token auth.Token) (result []model.FunctionInfo, err error) {
-	concepts := []model.Concept{}
-	err, _ = this.QueryPermissionsSearch(token.Jwt(), QueryMessage{
-		Resource: "concepts",
-		Find: &QueryFind{
-			QueryListCommons: QueryListCommons{
-				Limit:  9999,
-				Offset: 0,
-				Rights: "r",
-			},
-		},
-	}, &concepts)
-	if err != nil {
-		return result, err
-	}
-	characteristics := []CharacteristicsWrapper{}
-	err, _ = this.QueryPermissionsSearch(token.Jwt(), QueryMessage{
-		Resource: "characteristics",
-		Find: &QueryFind{
-			QueryListCommons: QueryListCommons{
-				Limit:  9999,
-				Offset: 0,
-				Rights: "r",
-			},
-		},
-	}, &characteristics)
-	if err != nil {
-		return result, err
-	}
-	err, _ = this.QueryPermissionsSearch(token.Jwt(), QueryMessage{
-		Resource: "functions",
-		Find: &QueryFind{
-			QueryListCommons: QueryListCommons{
-				Limit:  9999,
-				Offset: 0,
-				Rights: "r",
-			},
-		},
-	}, &result)
-	if err != nil {
-		return result, err
-	}
-
-	conceptIndex := map[string]model.Concept{}
-	for _, c := range concepts {
-		conceptIndex[c.Id] = c
-	}
-
-	characteristicsIndex := map[string]model.Characteristic{}
-	for _, c := range characteristics {
-		characteristicsIndex[c.Raw.Id] = c.Raw
-	}
-
-	for i, f := range result {
-		concept, ok := conceptIndex[f.ConceptId]
-		if ok {
-			f.Concept = model.ConceptInfo{Concept: concept, BaseCharacteristic: characteristicsIndex[concept.BaseCharacteristicId]}
-		}
-		result[i] = f
-	}
-	return result, nil
 }

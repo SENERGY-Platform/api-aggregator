@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-func New(ctx context.Context, wg *sync.WaitGroup) (permSearchUrl string, publisher *Publisher, err error) {
+func New(ctx context.Context, wg *sync.WaitGroup) (repoUrl string, publisher *Publisher, err error) {
 	_, zk, err := docker.Zookeeper(ctx, wg)
 	if err != nil {
 		log.Println("ERROR:", err)
@@ -41,20 +41,29 @@ func New(ctx context.Context, wg *sync.WaitGroup) (permSearchUrl string, publish
 		return "", nil, err
 	}
 
-	_, searchIp, err := docker.OpenSearch(ctx, wg)
+	_, mongoIp, err := docker.MongoDB(ctx, wg)
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()
 		return "", nil, err
 	}
+	mongoUrl := "mongodb://" + mongoIp + ":27017"
 
-	_, permIp, err := docker.PermSearch(ctx, wg, false, kafkaUrl, searchIp)
+	_, permV2Ip, err := docker.PermissionsV2(ctx, wg, mongoUrl, kafkaUrl)
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()
 		return "", nil, err
 	}
-	permSearchUrl = "http://" + permIp + ":8080"
+	permv2Url := "http://" + permV2Ip + ":8080"
+
+	_, repoIp, err := docker.DeviceRepo(ctx, wg, kafkaUrl, mongoUrl, permv2Url)
+	if err != nil {
+		log.Println("ERROR:", err)
+		debug.PrintStack()
+		return "", nil, err
+	}
+	repoUrl = "http://" + repoIp + ":8080"
 
 	time.Sleep(2 * time.Second)
 

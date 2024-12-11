@@ -18,71 +18,46 @@ package pkg
 
 import (
 	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
-	"github.com/SENERGY-Platform/api-aggregator/pkg/model"
+	"github.com/SENERGY-Platform/device-repository/lib/client"
+	"github.com/SENERGY-Platform/models/go/models"
+	"maps"
+	"slices"
 )
 
 func (this *Lib) GetDeviceClassUses(token auth.Token) (result interface{}, err error) {
-	var devices []model.ShortDevice
-	devices, err, _ = QueryPermissionSearchFindAll(this, token.Jwt(), QueryMessage{
-		Resource: "devices",
-		Find: &QueryFind{
-			QueryListCommons: QueryListCommons{
-				Rights: "r",
-				SortBy: "id",
-			},
-		},
-	}, func(e model.ShortDevice) string {
-		return e.Id
-	})
-	if err != nil {
-		return result, err
-	}
-
-	deviceTypeToDevice := map[string][]string{}
-	for _, device := range devices {
-		deviceTypeToDevice[device.DeviceTypeId] = append(deviceTypeToDevice[device.DeviceTypeId], device.Id)
-	}
-
-	deviceTypeIds := []string{}
-	for id, _ := range deviceTypeToDevice {
-		deviceTypeIds = append(deviceTypeIds, id)
-	}
-
-	deviceTypes := []model.ShortDeviceType{}
-	err, _ = this.QueryPermissionsSearch(token.Jwt(), QueryMessage{
-		Resource: "device-types",
-		ListIds: &QueryListIds{
-			QueryListCommons: QueryListCommons{
-				Limit:  len(deviceTypeIds),
-				Offset: 0,
-				Rights: "r",
-				SortBy: "name",
-			},
-			Ids: deviceTypeIds,
-		},
-	}, &deviceTypes)
-	if err != nil {
-		return result, err
-	}
-
+	allDevices := []models.ExtendedDevice{}
 	deviceClassToDevices := map[string][]string{}
-	for _, dt := range deviceTypes {
-		deviceClassToDevices[dt.DeviceClassId] = append(deviceClassToDevices[dt.DeviceClassId], deviceTypeToDevice[dt.Id]...)
+	deviceTypeToDevice := map[string][]string{}
+	for {
+		var limit int64 = 9999
+		var offset int64 = 9999
+		devices, _, err, _ := this.deviceRepo.ListExtendedDevices(token.Jwt(), client.ExtendedDeviceListOptions{
+			Limit:      limit,
+			Offset:     offset,
+			SortBy:     "name.asc",
+			Permission: client.READ,
+			FullDt:     true,
+		})
+		if err != nil {
+			return result, err
+		}
+		allDevices = append(allDevices, devices...)
+		for _, device := range devices {
+			deviceClassToDevices[device.DeviceType.DeviceClassId] = append(deviceClassToDevices[device.DeviceType.DeviceClassId], device.DeviceType.DeviceClassId)
+			deviceTypeToDevice[device.DeviceTypeId] = append(deviceTypeToDevice[device.DeviceTypeId], device.Id)
+		}
+		if int64(len(devices)) < limit {
+			break
+		}
+		offset = offset + limit
 	}
-
-	deviceClassIds := []string{}
-	for id, _ := range deviceClassToDevices {
-		deviceClassIds = append(deviceClassIds, id)
-	}
-
-	deviceClasses := []model.DeviceClass{}
-	err, _ = this.QueryPermissionsSearch(token.Jwt(), QueryMessage{
-		Resource: "device-classes",
-		ListIds: &QueryListIds{
-			QueryListCommons: QueryListCommons{},
-			Ids:              deviceClassIds,
-		},
-	}, &deviceClasses)
+	deviceClassIds := slices.Collect(maps.Keys(deviceClassToDevices))
+	deviceClasses, _, err, _ := this.deviceRepo.ListDeviceClasses(client.DeviceClassListOptions{
+		Ids:    deviceClassIds,
+		Limit:  int64(len(deviceClassIds)),
+		Offset: 0,
+		SortBy: "name.asc",
+	})
 	if err != nil {
 		return result, err
 	}

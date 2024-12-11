@@ -7,7 +7,6 @@ import (
 	"github.com/SENERGY-Platform/api-aggregator/pkg/api"
 	"github.com/SENERGY-Platform/api-aggregator/pkg/tests/environment"
 	"net"
-	"net/url"
 	"reflect"
 	"sort"
 	"strconv"
@@ -22,7 +21,7 @@ func TestDevicesEndpoint(t *testing.T) {
 	defer wg.Wait()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	permSearchUrl, publisher, err := environment.New(ctx, wg)
+	repoUrl, publisher, err := environment.New(ctx, wg)
 	if err != nil {
 		t.Error(err)
 		return
@@ -35,8 +34,8 @@ func TestDevicesEndpoint(t *testing.T) {
 	}
 
 	go api.Start(pkg.New(pkg.Config{
-		ServerPort:     serverPort,
-		PermissionsUrl: permSearchUrl,
+		ServerPort: serverPort,
+		IotUrl:     repoUrl,
 	}))
 
 	devices := []environment.Device{
@@ -106,109 +105,6 @@ func TestDevicesEndpoint(t *testing.T) {
 			Name: "bar 3",
 		},
 	}))
-	t.Run(testDeviceQueryRaw(`?limit=2&after.id=`+url.QueryEscape("urn:ses:device:d5"), serverPort, []environment.Device{
-		{
-			Id:   "urn:ses:device:d6",
-			Name: "bar 3",
-		},
-		{
-			Id:   "urn:ses:device:d7",
-			Name: "batz 1",
-		},
-	}))
-	t.Run(testDeviceQuery(`?limit=2&offset=1&search=foo`, serverPort, []environment.Device{
-		{
-			Id:   "urn:ses:device:d2",
-			Name: "foo 2",
-		},
-		{
-			Id:   "urn:ses:device:d3",
-			Name: "foo 3",
-		},
-	}))
-	t.Run(testDeviceQuery(`?location=urn:ses:location:l1`, serverPort, []environment.Device{
-		{
-			Id:   "urn:ses:device:d2",
-			Name: "foo 2",
-		},
-		{
-			Id:   "urn:ses:device:d3",
-			Name: "foo 3",
-		},
-		{
-			Id:   "urn:ses:device:d4",
-			Name: "bar 1",
-		},
-	}))
-
-	t.Run(testDeviceQuery(`?location=urn:ses:location:l1&limit=2`, serverPort, []environment.Device{
-		{
-			Id:   "urn:ses:device:d2",
-			Name: "foo 2",
-		},
-		{
-			Id:   "urn:ses:device:d4",
-			Name: "bar 1",
-		},
-	}))
-
-	t.Run(testDeviceQuery(`?location=urn:ses:location:l1&search=foo`, serverPort, []environment.Device{
-		{
-			Id:   "urn:ses:device:d2",
-			Name: "foo 2",
-		},
-		{
-			Id:   "urn:ses:device:d3",
-			Name: "foo 3",
-		},
-	}))
-
-	t.Run(testDeviceQuery(`?location=urn:ses:location:l1&search=foo&ids=urn:ses:device:d2`, serverPort, []environment.Device{
-		{
-			Id:   "urn:ses:device:d2",
-			Name: "foo 2",
-		},
-	}))
-
-	t.Run(testDeviceQuery(`?location=urn:ses:location:l1&search=foo&ids=urn:ses:device:d2,urn:ses:device:d4`, serverPort, []environment.Device{
-		{
-			Id:   "urn:ses:device:d2",
-			Name: "foo 2",
-		},
-	}))
-
-	t.Run(testDeviceQuery(`?location=urn:ses:location:l1&ids=urn:ses:device:d2,urn:ses:device:d4`, serverPort, []environment.Device{
-		{
-			Id:   "urn:ses:device:d2",
-			Name: "foo 2",
-		},
-		{
-			Id:   "urn:ses:device:d4",
-			Name: "bar 1",
-		},
-	}))
-
-	t.Run(testDeviceQuery(`?search=küh`, serverPort, []environment.Device{
-		{
-			Id:   "urn:ses:device:d99",
-			Name: "plug Kühlschrank Backofen",
-		},
-	}))
-
-	t.Run(testDeviceQuery(`?search=back`, serverPort, []environment.Device{
-		{
-			Id:   "urn:ses:device:d99",
-			Name: "plug Kühlschrank Backofen",
-		},
-	}))
-
-	t.Run(testDeviceQuery(`?search=`+url.QueryEscape("küh"), serverPort, []environment.Device{
-		{
-			Id:   "urn:ses:device:d99",
-			Name: "plug Kühlschrank Backofen",
-		},
-	}))
-
 }
 
 func testDeviceQuery(query string, port string, expected []environment.Device) (string, func(t *testing.T)) {

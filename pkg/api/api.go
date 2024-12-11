@@ -18,6 +18,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/SENERGY-Platform/service-commons/pkg/accesslog"
 	"log"
 	"net/http"
@@ -59,64 +60,17 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		json.NewEncoder(writer).Encode(result)
 	})
 
-	router.GET("/nested-function-infos", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		token, err := auth.GetParsedToken(request)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusBadRequest)
-			return
-		}
-		result, err := lib.GetNestedFunctionInfos(token)
-		if err != nil {
-			log.Println("ERROR: ", err)
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
-		json.NewEncoder(writer).Encode(result)
-	})
-
-	/*
-		query-parameter:
-				search  {string}	filters by partial text match
-				ids		{string,string...} returns by ids
-				location {string}	id of location in which the found devices must be located
-				log		{string}	influxdb duration (for example 4h) https://docs.influxdata.com/influxdb/v1.7/query_language/spec/#durations
-				state 	{string} 	filters result by device state
-				sort 	{string} 	sorts result by filed; if data-source does not support sorting, it will be performed locally
-										name | name.asc | name.desc
-				limit 	{int} 		may default to 100
-				offset 	{int}		may default to 0
-	*/
 	router.GET("/devices", func(res http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		state := r.URL.Query().Get("state")
-		sort := r.URL.Query().Get("sort")
 		limit := r.URL.Query().Get("limit")
 		offset := r.URL.Query().Get("offset")
-		search := r.URL.Query().Get("search")
-		ids := r.URL.Query().Get("ids")
-		location := r.URL.Query().Get("location")
 		logDuration := r.URL.Query().Get("log")
 
-		idList := []string{}
-		if ids != "" {
-			idList = strings.Split(strings.Replace(ids, " ", "", -1), ",")
-		}
-
-		afterId := r.URL.Query().Get("after.id")
-
 		limit, offset = limitOffsetDefault(limit, offset)
-		if sort == "" {
-			sort = "name"
-			if afterId != "" {
-				sort = "id"
-			}
-		}
 
 		intLimit, err := strconv.Atoi(limit)
 		if err != nil {
 			log.Println("ERROR: ", err)
 			http.Error(res, "limit is not a number: "+err.Error(), http.StatusBadRequest)
-			return
 			return
 		}
 
@@ -133,27 +87,12 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 			return
 		}
 
-		orderfeature, direction := getSortParts(sort)
-		var result []map[string]interface{}
-		if afterId != "" {
-			result, err = lib.FindDevicesAfter(token, search, idList, intLimit, afterId, orderfeature, direction, location, state)
-		} else {
-			result, err = lib.FindDevices(token, search, idList, intLimit, intOffset, orderfeature, direction, location, state)
-		}
+		result, err := lib.FindDevices(token, intLimit, intOffset)
 		if err != nil {
 			log.Println("ERROR: ", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if state != "" {
-			result, err = lib.FilterDevicesByState(token, result, state)
-			if err != nil {
-				log.Println("ERROR: ", err)
-				http.Error(res, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-
 		if logDuration != "" {
 			result, err = lib.CompleteDeviceHistory(token, logDuration, result)
 		}
@@ -170,19 +109,14 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 	/*
 		query-parameter:
 			optional:
-				search  {string}	filters by partial text match
 				limit 	{int} 		may default to 100
 				offset 	{int}		may default to 0
 				log		{string}	influxdb duration (for example 4h) https://docs.influxdata.com/influxdb/v1.7/query_language/spec/#durations
-				sort 	{string} 	sorts result by filed
-										name | name.asc | name.desc
 	*/
 	router.GET("/hubs", func(res http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		limit := r.URL.Query().Get("limit")
 		offset := r.URL.Query().Get("offset")
 		logDuration := r.URL.Query().Get("log")
-		search := r.URL.Query().Get("search")
-		sort := r.URL.Query().Get("sort")
 
 		token, err := auth.GetParsedToken(r)
 		if err != nil {
@@ -192,25 +126,24 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 
 		result := []map[string]interface{}{}
 
-		switch {
-		case limit == "" && offset == "" && sort == "" && search == "":
+		if limit == "" && offset == "" {
 			result, err = lib.ListAllGateways(token)
-		case search != "" && sort == "":
-			limit, offset = limitOffsetDefault(limit, offset)
-			result, err = lib.SearchGateways(token, search, limit, offset)
-		case search != "" && sort != "":
-			orderfeature, direction := getSortParts(sort)
-			limit, offset = limitOffsetDefault(limit, offset)
-			result, err = lib.SearchGatewaysOrdered(token, search, limit, offset, orderfeature, direction)
-		case search == "" && sort == "":
-			limit, offset = limitOffsetDefault(limit, offset)
-			result, err = lib.ListGateways(token, limit, offset)
-		case search == "" && sort != "":
-			limit, offset = limitOffsetDefault(limit, offset)
-			orderfeature, direction := getSortParts(sort)
-			result, err = lib.ListGatewaysOrdered(token, limit, offset, orderfeature, direction)
-		}
+		} else {
+			intLimit, err := strconv.ParseInt(limit, 10, 64)
+			if err != nil {
+				err = fmt.Errorf("limit is not a number: %w", err)
+				http.Error(res, err.Error(), http.StatusBadRequest)
+				return
+			}
 
+			intOffset, err := strconv.ParseInt(offset, 10, 64)
+			if err != nil {
+				err = fmt.Errorf("offset is not a number: %w", err)
+				http.Error(res, err.Error(), http.StatusBadRequest)
+				return
+			}
+			result, err = lib.ListGateways(token, intLimit, intOffset)
+		}
 		if err != nil {
 			log.Println("ERROR: ", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -247,148 +180,6 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		}
 		res.Header().Set("Content-Type", "application/json; charset=utf-8")
 		json.NewEncoder(res).Encode(result)
-	})
-
-	router.GET("/hubs/:id/devices", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		sort := request.URL.Query().Get("sort")
-		limit := request.URL.Query().Get("limit")
-		offset := request.URL.Query().Get("offset")
-		state := request.URL.Query().Get("state")
-
-		id := params.ByName("id")
-
-		token, err := auth.GetParsedToken(request)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		idList, err := lib.GetGatewayDevices(token, id)
-		var result []map[string]interface{}
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		if limit != "" || offset != "" || sort != "" {
-			limit, offset = limitOffsetDefault(limit, offset)
-			if sort == "" {
-				sort = "name"
-			}
-			orderfeature, direction := getSortParts(sort)
-			result, err = lib.CompleteDevicesOrdered(token, idList, limit, offset, orderfeature, direction)
-		} else {
-			result, err = lib.CompleteDevices(token, idList)
-		}
-
-		if state != "" {
-			result, err = lib.FilterDevicesByState(token, result, state)
-			if err != nil {
-				log.Println("ERROR: ", err)
-				http.Error(writer, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-
-		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
-		json.NewEncoder(writer).Encode(result)
-	})
-
-	router.GET("/device-types/:id/devices", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		sort := request.URL.Query().Get("sort")
-		limit := request.URL.Query().Get("limit")
-		offset := request.URL.Query().Get("offset")
-		state := request.URL.Query().Get("state")
-
-		id := params.ByName("id")
-		limit, offset = limitOffsetDefault(limit, offset)
-
-		if sort == "" {
-			sort = "name"
-		}
-		orderfeature, direction := getSortParts(sort)
-
-		token, err := auth.GetParsedToken(request)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		idList, err := lib.GetDeviceTypeDevices(token, id, limit, offset, orderfeature, direction)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		result, err := lib.CompleteDevices(token, idList)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if state != "" {
-			result, err = lib.FilterDevicesByState(token, result, state)
-			if err != nil {
-				log.Println("ERROR: ", err)
-				http.Error(writer, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-
-		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
-		json.NewEncoder(writer).Encode(result)
-	})
-
-	router.POST("/device-types-devices", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		state := request.URL.Query().Get("state")
-		direction := request.URL.Query().Get("direction")
-		orderfeature, direction := getSortParts("name.asc")
-
-		token, err := auth.GetParsedToken(request)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		type deviceTypesDevicesBody struct {
-			Ids []string `json:"ids"`
-		}
-		var body deviceTypesDevicesBody
-		err = json.NewDecoder(request.Body).Decode(&body)
-		if err != nil {
-			http.Error(writer, "unable to parse request body: "+err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		idList := []string{}
-		for _, id := range body.Ids {
-			deviceIds, err := lib.GetDeviceTypeDevices(token, id, "-1", "-1", orderfeature, direction)
-
-			if err != nil {
-				http.Error(writer, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			idList = append(idList, deviceIds...)
-		}
-
-		result, err := lib.CompleteDevices(token, idList)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if state != "" {
-			result, err = lib.FilterDevicesByState(token, result, state)
-			if err != nil {
-				log.Println("ERROR: ", err)
-				http.Error(writer, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-
-		result = lib.SortByName(result, true)
-
-		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
-		json.NewEncoder(writer).Encode(result)
 	})
 
 	router.GET("/aspects/:id/measuring-functions", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -429,13 +220,9 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 
 		additionalFunctionIds := []string{}
 		for _, importType := range importTypes {
-			for _, aspectFunctionId := range importType.AspectFunctions {
-				parts := strings.Split(aspectFunctionId, "_")
-				aspectId := parts[0]
-				functionId := parts[1]
-
-				if isInSlice(ids, aspectId) && !isInSlice(additionalFunctionIds, functionId) && !isFunctionLoaded(functions, functionId) {
-					additionalFunctionIds = append(additionalFunctionIds, functionId)
+			for _, c := range importType.Criteria {
+				if isInSlice(ids, c.AspectId) && !isInSlice(additionalFunctionIds, c.FunctionId) && !isFunctionLoaded(functions, c.FunctionId) {
+					additionalFunctionIds = append(additionalFunctionIds, c.FunctionId)
 				}
 			}
 		}
@@ -483,11 +270,10 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		}
 		additionalAspectIds := []string{}
 		for _, t := range importTypes {
-			for _, aspectFunction := range t.AspectFunctions {
-				aspectId := strings.Split(aspectFunction, "_")[0]
-				if !isInSlice(aspectIds, aspectId) {
-					additionalAspectIds = append(additionalAspectIds, aspectId)
-					aspectIds = append(aspectIds, aspectId)
+			for _, c := range t.Criteria {
+				if !isInSlice(aspectIds, c.AspectId) {
+					additionalAspectIds = append(additionalAspectIds, c.AspectId)
+					aspectIds = append(aspectIds, c.AspectId)
 				}
 			}
 		}

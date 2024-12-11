@@ -22,7 +22,8 @@ import (
 	"errors"
 	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
 	"github.com/SENERGY-Platform/api-aggregator/pkg/model"
-	"github.com/SENERGY-Platform/permission-search/lib/client"
+	"github.com/SENERGY-Platform/device-repository/lib/client"
+	importRepo "github.com/SENERGY-Platform/import-repository/lib/client"
 	"io"
 	"net/http"
 	"net/url"
@@ -31,36 +32,25 @@ import (
 
 type Interface interface {
 	Config() Config
-	SortByName(input []map[string]interface{}, sortAsc bool) (output []map[string]interface{})
-	FilterDevicesByState(token auth.Token, devices []map[string]interface{}, state string) (result []map[string]interface{}, err error)
-	CompleteDevices(token auth.Token, ids []string) (result []map[string]interface{}, err error)
-	CompleteDevicesOrdered(token auth.Token, ids []string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error)
-	GetGatewaysHistory(token auth.Token, duration string) (result []map[string]interface{}, err error)
-	ListGateways(token auth.Token, limit string, offset string) (result []map[string]interface{}, err error)
-	SearchGateways(token auth.Token, query string, limit string, offset string) (result []map[string]interface{}, err error)
-	ListGatewaysOrdered(token auth.Token, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error)
-	SearchGatewaysOrdered(token auth.Token, query string, limit string, offset string, orderfeature string, direction string) (result []map[string]interface{}, err error)
+	ListGateways(token auth.Token, limit int64, offset int64) (result []map[string]interface{}, err error)
 	GetExtendedProcessList(token auth.Token, query url.Values) (result []map[string]interface{}, err error)
 	CompleteDeviceHistory(token auth.Token, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error)
 	CompleteGatewayHistory(token auth.Token, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error)
 	ListAllGateways(token auth.Token) (result []map[string]interface{}, err error)
-	GetGatewayDevices(token auth.Token, id string) (ids []string, err error)
-	GetDeviceTypeDevices(token auth.Token, id string, limit string, offset string, orderFeature string, direction string) (ids []string, err error)
-	FindDevices(token auth.Token, search string, list []string, limit int, offset int, orderfeature string, direction string, location string, state string) ([]map[string]interface{}, error)
-	FindDevicesAfter(token auth.Token, search string, list []string, limit int, afterId string, orderfeature string, direction string, location string, state string) ([]map[string]interface{}, error)
+	FindDevices(token auth.Token, limit int, offset int) ([]map[string]interface{}, error)
 	GetMeasuringFunctionsForAspect(token auth.Token, aspectId string) (functions []Function, err error, code int)
 	GetMeasuringFunctions(token auth.Token, functionIds []string) (functions []Function, err error, code int)
-	GetImportTypesWithAspect(token auth.Token, aspectIds []string) (importTypes []ImportTypePermissionSearch, err error, code int)
-	GetNestedFunctionInfos(token auth.Token) (result []model.FunctionInfo, err error)
+	GetImportTypesWithAspect(token auth.Token, aspectIds []string) (importTypes []ImportTypeWithCriteria, err error, code int)
 	GetAspectNodes(ids []string, token auth.Token) ([]model.AspectNode, error)
 	GetAspectNodesWithMeasuringFunction(token auth.Token) ([]model.AspectNode, error)
-	GetImportTypes(token auth.Token) (importTypes []ImportTypePermissionSearch, err error, code int)
+	GetImportTypes(token auth.Token) (importTypes []ImportTypeWithCriteria, err error, code int)
 	GetDeviceClassUses(token auth.Token) (result interface{}, err error)
 }
 
 type Lib struct {
-	config           Config
-	permissionsearch client.Client
+	config     Config
+	deviceRepo client.Interface
+	importRepo importRepo.Interface
 }
 
 func (this *Lib) Config() Config {
@@ -68,7 +58,7 @@ func (this *Lib) Config() Config {
 }
 
 func New(config Config) *Lib {
-	return &Lib{config: config, permissionsearch: client.NewClient(config.PermissionsUrl)}
+	return &Lib{config: config, deviceRepo: client.NewClient(config.IotUrl), importRepo: importRepo.NewClient(config.ImportRepoUrl)}
 }
 
 func post(token string, url string, contentType string, body io.Reader) (resp *http.Response, err error) {

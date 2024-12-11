@@ -1,14 +1,13 @@
 {
   "server_port": "8080",
 
-  "permissions_url": "http://permissionsearch:8080",
-  "iot_url": "http://iot-repo:8080",
+  "iot_url": "http://api.device-repository:8080",
+  "import_repo_url": "http://repo.import-meta:8080",
   "connection_log_url": "",
 
   "camunda_wrapper_url": "",
   "process_deployment_url": "",
   "event_manager_url": "",
 
-  "use_annotations_for_connection_state": true,
   "http_client_timeout": "30s"
 }

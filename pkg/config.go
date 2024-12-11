@@ -33,14 +33,13 @@ type Config struct {
 	ServerPort string `json:"server_port"`
 
 	IotUrl           string `json:"iot_url"`
+	ImportRepoUrl    string `json:"import_repo_url"`
 	ConnectionLogUrl string `json:"connection_log_url"`
-	PermissionsUrl   string `json:"permissions_url"`
 
-	CamundaWrapperUrl                string `json:"camunda_wrapper_url"`
-	ProcessDeploymentUrl             string `json:"process_deployment_url"`
-	EventManagerUrl                  string `json:"event_manager_url"`
-	UseAnnotationsForConnectionState bool   `json:"use_annotations_for_connection_state"`
-	HttpClientTimeout                string `json:"http_client_timeout"`
+	CamundaWrapperUrl    string `json:"camunda_wrapper_url"`
+	ProcessDeploymentUrl string `json:"process_deployment_url"`
+	EventManagerUrl      string `json:"event_manager_url"`
+	HttpClientTimeout    string `json:"http_client_timeout"`
 }
 
 func LoadConfig(location string) (config Config, err error) {
