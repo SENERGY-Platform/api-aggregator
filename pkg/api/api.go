@@ -118,6 +118,8 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		offset := r.URL.Query().Get("offset")
 		logDuration := r.URL.Query().Get("log")
 
+		limit, offset = limitOffsetDefault(limit, offset)
+
 		token, err := auth.GetParsedToken(r)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusBadRequest)
