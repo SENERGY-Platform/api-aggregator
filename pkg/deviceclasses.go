@@ -30,7 +30,7 @@ func (this *Lib) GetDeviceClassUses(token auth.Token) (result interface{}, err e
 	deviceTypeToDevice := map[string][]string{}
 	for {
 		var limit int64 = 9999
-		var offset int64 = 9999
+		var offset int64 = 0
 		devices, _, err, _ := this.deviceRepo.ListExtendedDevices(token.Jwt(), client.ExtendedDeviceListOptions{
 			Limit:      limit,
 			Offset:     offset,
@@ -52,6 +52,9 @@ func (this *Lib) GetDeviceClassUses(token auth.Token) (result interface{}, err e
 		offset = offset + limit
 	}
 	deviceClassIds := slices.Collect(maps.Keys(deviceClassToDevices))
+	if deviceClassIds == nil {
+		deviceClassIds = []string{}
+	}
 	deviceClasses, _, err, _ := this.deviceRepo.ListDeviceClasses(client.DeviceClassListOptions{
 		Ids:    deviceClassIds,
 		Limit:  int64(len(deviceClassIds)),
