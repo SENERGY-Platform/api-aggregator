@@ -58,7 +58,7 @@ func (this *Lib) Config() Config {
 }
 
 func New(config Config) *Lib {
-	return &Lib{config: config, deviceRepo: client.NewClient(config.IotUrl), importRepo: importRepo.NewClient(config.ImportRepoUrl)}
+	return &Lib{config: config, deviceRepo: client.NewClient(config.IotUrl, nil), importRepo: importRepo.NewClient(config.ImportRepoUrl)}
 }
 
 func post(token string, url string, contentType string, body io.Reader) (resp *http.Response, err error) {
