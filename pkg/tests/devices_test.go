@@ -6,6 +6,8 @@ import (
 	"github.com/SENERGY-Platform/api-aggregator/pkg"
 	"github.com/SENERGY-Platform/api-aggregator/pkg/api"
 	"github.com/SENERGY-Platform/api-aggregator/pkg/tests/environment"
+	"github.com/SENERGY-Platform/device-repository/lib/client"
+	"github.com/SENERGY-Platform/models/go/models"
 	"net"
 	"reflect"
 	"sort"
@@ -21,11 +23,13 @@ func TestDevicesEndpoint(t *testing.T) {
 	defer wg.Wait()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	repoUrl, publisher, err := environment.New(ctx, wg)
+	repoUrl, err := environment.New(ctx, wg)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+
+	c := client.NewClient(repoUrl, nil)
 
 	serverPort, err := getFreePortStr()
 	if err != nil {
@@ -38,78 +42,90 @@ func TestDevicesEndpoint(t *testing.T) {
 		IotUrl:     repoUrl,
 	}))
 
-	devices := []environment.Device{
+	devices := []models.Device{
 		{
-			Id:   "urn:ses:device:d1",
-			Name: "foo 1",
+			Id:      "urn:ses:device:d1",
+			Name:    "foo 1",
+			OwnerId: userId,
 		},
 		{
-			Id:   "urn:ses:device:d2",
-			Name: "foo 2",
+			Id:      "urn:ses:device:d2",
+			Name:    "foo 2",
+			OwnerId: userId,
 		},
 		{
-			Id:   "urn:ses:device:d3",
-			Name: "foo 3",
+			Id:      "urn:ses:device:d3",
+			Name:    "foo 3",
+			OwnerId: userId,
 		},
 		{
-			Id:   "urn:ses:device:d4",
-			Name: "bar 1",
+			Id:      "urn:ses:device:d4",
+			Name:    "bar 1",
+			OwnerId: userId,
 		},
 		{
-			Id:   "urn:ses:device:d5",
-			Name: "bar 2",
+			Id:      "urn:ses:device:d5",
+			Name:    "bar 2",
+			OwnerId: userId,
 		},
 		{
-			Id:   "urn:ses:device:d6",
-			Name: "bar 3",
+			Id:      "urn:ses:device:d6",
+			Name:    "bar 3",
+			OwnerId: userId,
 		},
 		{
-			Id:   "urn:ses:device:d7",
-			Name: "batz 1",
+			Id:      "urn:ses:device:d7",
+			Name:    "batz 1",
+			OwnerId: userId,
 		},
 		{
-			Id:   "urn:ses:device:d8",
-			Name: "batz 2",
+			Id:      "urn:ses:device:d8",
+			Name:    "batz 2",
+			OwnerId: userId,
 		},
 		{
-			Id:   "urn:ses:device:d9",
-			Name: "batz 3",
+			Id:      "urn:ses:device:d9",
+			Name:    "batz 3",
+			OwnerId: userId,
 		},
 
 		{
-			Id:   "urn:ses:device:d99",
-			Name: "plug Kühlschrank Backofen",
+			Id:      "urn:ses:device:d99",
+			Name:    "plug Kühlschrank Backofen",
+			OwnerId: userId,
 		},
 	}
 
-	location := environment.Location{
+	location := models.Location{
 		Id:        "urn:ses:location:l1",
 		Name:      "test",
 		DeviceIds: []string{"urn:ses:device:d2", "urn:ses:device:d3", "urn:ses:device:d4"},
 	}
 
-	t.Run("create devices", createDevices(publisher, devices))
-	t.Run("create locations", createLocations(publisher, []environment.Location{location}))
+	t.Run("create devices", createDevices(c, devices))
+	t.Run("create locations", createLocations(c, []models.Location{location}))
 
 	time.Sleep(1 * time.Second)
 
 	t.Run(testDeviceQuery(``, serverPort, devices))
 	t.Run(testDeviceQuery(`?limit=100&offset=0`, serverPort, devices))
-	t.Run(testDeviceQuery(`?limit=2&offset=1`, serverPort, []environment.Device{
+	t.Run(testDeviceQuery(`?limit=2&offset=1`, serverPort, []models.Device{
 		{
-			Id:   "urn:ses:device:d5",
-			Name: "bar 2",
+			Id:      "urn:ses:device:d5",
+			Name:    "bar 2",
+			OwnerId: userId,
 		},
 		{
-			Id:   "urn:ses:device:d6",
-			Name: "bar 3",
+			Id:      "urn:ses:device:d6",
+			Name:    "bar 3",
+			OwnerId: userId,
 		},
 	}))
 }
 
-func testDeviceQuery(query string, port string, expected []environment.Device) (string, func(t *testing.T)) {
+func testDeviceQuery(query string, port string, expected []models.Device) (string, func(t *testing.T)) {
 	return query, func(t *testing.T) {
-		result := []environment.Device{}
+		result := []models.Device{}
 		err := pkg.GetJson(testjwt, "http://localhost:"+port+"/devices"+strings.ReplaceAll(query, ":", "%3A"), &result)
 		if err != nil {
 			t.Error(err)
@@ -124,14 +140,14 @@ func testDeviceQuery(query string, port string, expected []environment.Device) (
 		if !reflect.DeepEqual(result, expected) {
 			expectedJson, _ := json.Marshal(expected)
 			resultJson, _ := json.Marshal(result)
-			t.Error(string(resultJson), "\n", string(expectedJson))
+			t.Error("\n", string(resultJson), "\n", string(expectedJson))
 		}
 	}
 }
 
-func testDeviceQueryRaw(query string, port string, expected []environment.Device) (string, func(t *testing.T)) {
+func testDeviceQueryRaw(query string, port string, expected []models.Device) (string, func(t *testing.T)) {
 	return query, func(t *testing.T) {
-		result := []environment.Device{}
+		result := []models.Device{}
 		err := pkg.GetJson(testjwt, "http://localhost:"+port+"/devices"+query, &result)
 		if err != nil {
 			t.Error(err)
@@ -151,10 +167,10 @@ func testDeviceQueryRaw(query string, port string, expected []environment.Device
 	}
 }
 
-func createDevices(publisher *environment.Publisher, devices []environment.Device) func(t *testing.T) {
+func createDevices(c client.Interface, devices []models.Device) func(t *testing.T) {
 	return func(t *testing.T) {
 		for _, d := range devices {
-			err := publisher.PublishDevice(d, userId)
+			_, err, _ := c.SetDevice(testjwt, d, client.DeviceUpdateOptions{})
 			if err != nil {
 				t.Error(err)
 				return
@@ -163,10 +179,10 @@ func createDevices(publisher *environment.Publisher, devices []environment.Devic
 	}
 }
 
-func createLocations(publisher *environment.Publisher, locations []environment.Location) func(t *testing.T) {
+func createLocations(c client.Interface, locations []models.Location) func(t *testing.T) {
 	return func(t *testing.T) {
 		for _, l := range locations {
-			err := publisher.PublishLocation(l, userId)
+			_, err, _ := c.SetLocation(testjwt, l)
 			if err != nil {
 				t.Error(err)
 				return

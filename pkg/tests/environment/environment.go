@@ -25,12 +25,12 @@ import (
 	"time"
 )
 
-func New(ctx context.Context, wg *sync.WaitGroup) (repoUrl string, publisher *Publisher, err error) {
+func New(ctx context.Context, wg *sync.WaitGroup) (repoUrl string, err error) {
 	_, zk, err := docker.Zookeeper(ctx, wg)
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()
-		return "", nil, err
+		return "", err
 	}
 	zkUrl := zk + ":2181"
 
@@ -38,14 +38,14 @@ func New(ctx context.Context, wg *sync.WaitGroup) (repoUrl string, publisher *Pu
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()
-		return "", nil, err
+		return "", err
 	}
 
 	_, mongoIp, err := docker.MongoDB(ctx, wg)
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()
-		return "", nil, err
+		return "", err
 	}
 	mongoUrl := "mongodb://" + mongoIp + ":27017"
 
@@ -53,7 +53,7 @@ func New(ctx context.Context, wg *sync.WaitGroup) (repoUrl string, publisher *Pu
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()
-		return "", nil, err
+		return "", err
 	}
 	permv2Url := "http://" + permV2Ip + ":8080"
 
@@ -61,13 +61,11 @@ func New(ctx context.Context, wg *sync.WaitGroup) (repoUrl string, publisher *Pu
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()
-		return "", nil, err
+		return "", err
 	}
 	repoUrl = "http://" + repoIp + ":8080"
 
 	time.Sleep(2 * time.Second)
-
-	publisher, err = NewPublisher(zkUrl, "devices", "locations")
 
 	return
 }
