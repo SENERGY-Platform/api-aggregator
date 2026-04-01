@@ -18,7 +18,6 @@ package pkg
 
 import (
 	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
-	"log"
 )
 
 func (this *Lib) SetOnlineState(token auth.Token, dependencies []Dependencies) (result []Dependencies, err error) {
@@ -92,7 +91,7 @@ func (this *Lib) SetOnlineState(token auth.Token, dependencies []Dependencies) (
 func (this *Lib) GetDeviceLogStates(token auth.Token, deviceIds []string) (result map[string]bool, err error) {
 	result = map[string]bool{}
 	if this.Config().ConnectionLogUrl == "" || this.Config().ConnectionLogUrl == "-" {
-		log.Println("WARNING: no connectionlog url configured")
+		this.Config().GetLogger().Warn("no connectionlog url configured")
 		return
 	}
 	err = postJson(token.Token, this.config.ConnectionLogUrl+"/intern/state/device/check", deviceIds, &result)
@@ -102,7 +101,7 @@ func (this *Lib) GetDeviceLogStates(token auth.Token, deviceIds []string) (resul
 func (this *Lib) GetGatewayLogStates(token auth.Token, ids []string) (result map[string]bool, err error) {
 	result = map[string]bool{}
 	if this.Config().ConnectionLogUrl == "" || this.Config().ConnectionLogUrl == "-" {
-		log.Println("WARNING: no connectionlog url configured")
+		this.Config().GetLogger().Warn("no connectionlog url configured")
 		for _, id := range ids {
 			result[id] = true
 		}
@@ -114,7 +113,7 @@ func (this *Lib) GetGatewayLogStates(token auth.Token, ids []string) (result map
 
 func (this *Lib) GetDeviceLogHistory(token auth.Token, deviceIds []string, duration string) (result map[string]HistorySeries, err error) {
 	if this.Config().ConnectionLogUrl == "" || this.Config().ConnectionLogUrl == "-" {
-		log.Println("WARNING: no connectionlog url configured")
+		this.Config().GetLogger().Warn("no connectionlog url configured")
 		result = map[string]HistorySeries{}
 		return
 	}
@@ -139,7 +138,7 @@ type HistorySeries struct {
 func (this *Lib) GetLogHistory(token auth.Token, kind string, ids []string, duration string) (result map[string]HistorySeries, err error) {
 	result = map[string]HistorySeries{}
 	if this.Config().ConnectionLogUrl == "" || this.Config().ConnectionLogUrl == "-" {
-		log.Println("WARNING: no connectionlog url configured")
+		this.Config().GetLogger().Warn("no connectionlog url configured")
 		return
 	}
 	temp := []HistoryResult{}
@@ -156,7 +155,7 @@ func (this *Lib) GetLogHistory(token auth.Token, kind string, ids []string, dura
 func (this *Lib) GetLogstarts(token auth.Token, kind string, ids []string) (result map[string]interface{}, err error) {
 	result = map[string]interface{}{}
 	if this.Config().ConnectionLogUrl == "" || this.Config().ConnectionLogUrl == "-" {
-		log.Println("WARNING: no connectionlog url configured")
+		this.Config().GetLogger().Warn("no connectionlog url configured")
 		return
 	}
 	err = postJson(token.Token, this.config.ConnectionLogUrl+"/intern/logstarts/"+kind, ids, &result)
@@ -166,7 +165,7 @@ func (this *Lib) GetLogstarts(token auth.Token, kind string, ids []string) (resu
 func (this *Lib) GetLogedges(token auth.Token, kind string, ids []string, duration string) (result map[string]interface{}, err error) {
 	result = map[string]interface{}{}
 	if this.Config().ConnectionLogUrl == "" || this.Config().ConnectionLogUrl == "-" {
-		log.Println("WARNING: no connectionlog url configured")
+		this.Config().GetLogger().Warn("no connectionlog url configured")
 		return
 	}
 	err = postJson(token.Token, this.config.ConnectionLogUrl+"/intern/logedge/"+kind+"/"+duration, ids, &result)

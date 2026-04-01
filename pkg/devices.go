@@ -19,10 +19,10 @@ package pkg
 import (
 	"encoding/json"
 	"errors"
+
 	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
 	"github.com/SENERGY-Platform/device-repository/lib/client"
 	"github.com/SENERGY-Platform/models/go/models"
-	"log"
 )
 
 func (this *Lib) FindDevices(token auth.Token, limit int, offset int) (devices []map[string]interface{}, err error) {
@@ -85,12 +85,12 @@ func (this *Lib) CompleteDeviceHistory(token auth.Token, duration string, device
 	}
 	logHistory, err := this.GetDeviceLogHistory(token, ids, duration)
 	if err != nil {
-		log.Println("ERROR legacyDeviceTransformations.GetDeviceLogHistory()", err)
+		this.Config().GetLogger().Error("ERROR legacyDeviceTransformations.GetDeviceLogHistory()", "error", err)
 		return result, err
 	}
 	logEdges, err := this.GetLogedges(token, "device", ids, duration)
 	if err != nil {
-		log.Println("ERROR legacyDeviceTransformations.GetLogedges()", err)
+		this.Config().GetLogger().Error("ERROR legacyDeviceTransformations.GetLogedges()", "error", err)
 		return result, err
 	}
 	for _, id := range ids {

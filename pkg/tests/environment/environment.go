@@ -18,23 +18,16 @@ package environment
 
 import (
 	"context"
-	"github.com/SENERGY-Platform/api-aggregator/pkg/tests/environment/docker"
 	"log"
 	"runtime/debug"
 	"sync"
 	"time"
+
+	"github.com/SENERGY-Platform/api-aggregator/pkg/tests/environment/docker"
 )
 
 func New(ctx context.Context, wg *sync.WaitGroup) (repoUrl string, err error) {
-	_, zk, err := docker.Zookeeper(ctx, wg)
-	if err != nil {
-		log.Println("ERROR:", err)
-		debug.PrintStack()
-		return "", err
-	}
-	zkUrl := zk + ":2181"
-
-	kafkaUrl, err := docker.Kafka(ctx, wg, zkUrl)
+	kafkaUrl, err := docker.Kafka(ctx, wg)
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()

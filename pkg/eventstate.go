@@ -19,8 +19,7 @@ package pkg
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
-	"log"
+	"io"
 	"net/http"
 	"net/url"
 	"runtime/debug"
@@ -40,20 +39,20 @@ func (this *Lib) CheckEventStates(token string, ids []string) (result map[string
 	req.Header.Set("Authorization", token)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Println("ERROR: GetProcessDeploymentList()::http.DefaultClient.Do(req)", err)
+		this.Config().GetLogger().Error("ERROR CheckEventStates()", "error", err)
 		debug.PrintStack()
 		return result, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 500 {
-		responseMsg, _ := ioutil.ReadAll(resp.Body)
-		log.Println("ERROR: CheckEventState(): unexpected response", resp.StatusCode, string(responseMsg))
+		responseMsg, _ := io.ReadAll(resp.Body)
+		this.Config().GetLogger().Error("ERROR CheckEventStates() unexpected response", "status-code", resp.StatusCode, "error", string(responseMsg))
 		debug.PrintStack()
 		return result, errors.New(string(responseMsg))
 	}
 	if resp.StatusCode != 200 {
-		responseMsg, _ := ioutil.ReadAll(resp.Body)
-		log.Println("DEBUG: event pipeline not ready:", resp.StatusCode, string(responseMsg))
+		responseMsg, _ := io.ReadAll(resp.Body)
+		this.Config().GetLogger().Debug("event pipeline not ready", "status-code", resp.StatusCode, "response", string(responseMsg))
 		debug.PrintStack()
 		return result, nil
 	}

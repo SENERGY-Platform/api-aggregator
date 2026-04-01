@@ -20,13 +20,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"reflect"
 	"regexp"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
+
+	struct_logger "github.com/SENERGY-Platform/go-service-base/struct-logger"
 )
 
 type Config struct {
@@ -40,6 +44,9 @@ type Config struct {
 	ProcessDeploymentUrl string `json:"process_deployment_url"`
 	EventManagerUrl      string `json:"event_manager_url"`
 	HttpClientTimeout    string `json:"http_client_timeout"`
+
+	LogLevel string       `json:"log_level"`
+	logger   *slog.Logger `json:"-"`
 }
 
 func LoadConfig(location string) (config Config, err error) {
@@ -124,6 +131,35 @@ func setDefaultHttpClient(config Config) {
 	var err error
 	http.DefaultClient.Timeout, err = time.ParseDuration(config.HttpClientTimeout)
 	if err != nil {
-		log.Println("WARNING: invalid http timeout --> no timeouts\n", err)
+		config.GetLogger().Warn("invalid http timeout --> no timeouts", "error", err)
 	}
+}
+
+func (this *Config) GetLogger() *slog.Logger {
+	if this.logger == nil {
+		info, ok := debug.ReadBuildInfo()
+		project := ""
+		org := ""
+		if ok {
+			if parts := strings.Split(info.Main.Path, "/"); len(parts) > 2 {
+				project = strings.Join(parts[2:], "/")
+				org = strings.Join(parts[:2], "/")
+			}
+		}
+		this.logger = struct_logger.New(
+			struct_logger.Config{
+				Handler:    struct_logger.JsonHandlerSelector,
+				Level:      this.LogLevel,
+				TimeFormat: time.RFC3339Nano,
+				TimeUtc:    true,
+				AddMeta:    true,
+			},
+			os.Stdout,
+			org,
+			project,
+		)
+		slog.SetDefault(this.logger)
+		slog.SetLogLoggerLevel(slog.LevelInfo)
+	}
+	return this.logger
 }

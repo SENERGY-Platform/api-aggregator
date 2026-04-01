@@ -19,13 +19,13 @@ package pkg
 import (
 	"encoding/json"
 	"errors"
-	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
-	"io/ioutil"
-	"log"
+	"io"
 	"net/http"
 	"net/url"
 	"runtime/debug"
 	"strings"
+
+	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
 )
 
 func (this *Lib) GetExtendedProcessList(token auth.Token, query url.Values) (result []map[string]interface{}, err error) {
@@ -37,8 +37,9 @@ func (this *Lib) GetExtendedProcessList(token auth.Token, query url.Values) (res
 	for _, process := range processes {
 		id, ok := process["id"].(string)
 		if !ok {
-			log.Println("ERROR: unable to read process id", process)
-			return result, errors.New("unable to read process id")
+			err = errors.New("unable to read process id")
+			this.Config().GetLogger().Error("unable to read process id", "process", process, "error", err)
+			return result, err
 		}
 		ids = append(ids, id)
 	}
@@ -57,8 +58,9 @@ func (this *Lib) GetExtendedProcessList(token auth.Token, query url.Values) (res
 	for _, process := range processes {
 		id, ok := process["id"].(string)
 		if !ok {
-			log.Println("ERROR: unable to read process id", process)
-			return result, errors.New("unable to read process id")
+			err = errors.New("unable to read process id")
+			this.Config().GetLogger().Error("unable to read process id", "process", process, "error", err)
+			return result, err
 		}
 		process["online"] = true
 		process["offline_reasons"] = []OfflineReason{}
@@ -73,7 +75,7 @@ func (this *Lib) GetExtendedProcessList(token auth.Token, query url.Values) (res
 
 func (this *Lib) GetProcessDeploymentList(token auth.Token, query url.Values) (result []map[string]interface{}, err error) {
 	if this.Config().CamundaWrapperUrl == "" || this.Config().CamundaWrapperUrl == "-" {
-		log.Println("WARNING: no CamundaWrapperUrl url configured")
+		this.Config().GetLogger().Warn("no CamundaWrapperUrl url configured")
 		return
 	}
 	req, err := http.NewRequest("GET", this.config.CamundaWrapperUrl+"/deployment?"+query.Encode(), nil)
@@ -84,14 +86,14 @@ func (this *Lib) GetProcessDeploymentList(token auth.Token, query url.Values) (r
 	req.Header.Set("Authorization", token.Token)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Println("ERROR: GetProcessDeploymentList()::http.DefaultClient.Do(req)", err)
+		this.Config().GetLogger().Error("ERROR: GetProcessDeploymentList()::http.DefaultClient.Do(req)", "error", err)
 		debug.PrintStack()
 		return result, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 300 {
-		responseMsg, _ := ioutil.ReadAll(resp.Body)
-		log.Println("ERROR: GetProcessDeploymentList(): unexpected response", resp.StatusCode, string(responseMsg))
+		responseMsg, _ := io.ReadAll(resp.Body)
+		this.Config().GetLogger().Error("ERROR: GetProcessDeploymentList()::unexpected response", "status-code", resp.StatusCode, "error", string(responseMsg))
 		debug.PrintStack()
 		return result, errors.New("unexpected response")
 	}
@@ -104,7 +106,7 @@ func (this *Lib) GetProcessDeploymentList(token auth.Token, query url.Values) (r
 
 func (this *Lib) GetProcessDependencyList(token auth.Token, processIds []string) (result []Dependencies, err error) {
 	if this.Config().ProcessDeploymentUrl == "" || this.Config().ProcessDeploymentUrl == "-" {
-		log.Println("WARNING: no ProcessDeploymentUrl url configured")
+		this.Config().GetLogger().Warn("no ProcessDeploymentUrl url configured")
 		return
 	}
 	err = GetJson(token.Token, this.config.ProcessDeploymentUrl+"/dependencies?ids="+strings.Join(processIds, ","), &result)

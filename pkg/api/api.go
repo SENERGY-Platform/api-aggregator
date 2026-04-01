@@ -19,11 +19,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/SENERGY-Platform/service-commons/pkg/accesslog"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/SENERGY-Platform/service-commons/pkg/accesslog"
 
 	"github.com/SENERGY-Platform/api-aggregator/pkg"
 	"github.com/SENERGY-Platform/api-aggregator/pkg/api/util"
@@ -33,11 +33,11 @@ import (
 )
 
 func Start(lib pkg.Interface) {
-	log.Println("start server on port: ", lib.Config().ServerPort)
+	lib.Config().GetLogger().Info("start server", "port", lib.Config().ServerPort)
 	httpHandler := getRoutes(lib)
 	corseHandler := util.NewCors(httpHandler)
 	logger := accesslog.New(corseHandler)
-	log.Println(http.ListenAndServe(":"+lib.Config().ServerPort, logger))
+	lib.Config().GetLogger().Info("server closed", "result", http.ListenAndServe(":"+lib.Config().ServerPort, logger))
 }
 
 func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
@@ -52,7 +52,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		}
 		result, err := lib.GetDeviceClassUses(token)
 		if err != nil {
-			log.Println("ERROR: ", err)
+			lib.Config().GetLogger().Error("unable to get device-class-uses", "error", err)
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -69,14 +69,14 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 
 		intLimit, err := strconv.Atoi(limit)
 		if err != nil {
-			log.Println("ERROR: ", err)
+			lib.Config().GetLogger().Error("unable to parse limit", "error", err)
 			http.Error(res, "limit is not a number: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		intOffset, err := strconv.Atoi(offset)
 		if err != nil {
-			log.Println("ERROR: ", err)
+			lib.Config().GetLogger().Error("unable to parse offset", "error", err)
 			http.Error(res, "offset is not a number: "+err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -89,7 +89,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 
 		result, err := lib.FindDevices(token, intLimit, intOffset)
 		if err != nil {
-			log.Println("ERROR: ", err)
+			lib.Config().GetLogger().Error("unable to find devices", "error", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -98,7 +98,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		}
 
 		if err != nil {
-			log.Println("ERROR: ", err)
+			lib.Config().GetLogger().Error("unable to complete device history", "error", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -147,7 +147,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 			result, err = lib.ListGateways(token, intLimit, intOffset)
 		}
 		if err != nil {
-			log.Println("ERROR: ", err)
+			lib.Config().GetLogger().Error("unable to list gateways", "error", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -157,7 +157,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		}
 
 		if err != nil {
-			log.Println("ERROR: ", err)
+			lib.Config().GetLogger().Error("unable to complete gateway history", "error", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -168,7 +168,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 
 	//reads query parameter like https://docs.camunda.org/manual/7.5/reference/rest/deployment/get-query/
 	router.GET("/processes", func(res http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		log.Println("DEBUG: ", r.URL.Query())
+		lib.Config().GetLogger().Debug("/processes", "query", r.URL.Query())
 		token, err := auth.GetParsedToken(r)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusBadRequest)
@@ -176,7 +176,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		}
 		result, err := lib.GetExtendedProcessList(token, r.URL.Query())
 		if err != nil {
-			log.Println("ERROR: ", err)
+			lib.Config().GetLogger().Error("unable to get process list", "error", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -194,7 +194,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		id := params.ByName("id")
 		functions, err, code := lib.GetMeasuringFunctionsForAspect(token, id)
 		if err != nil {
-			log.Println("ERROR: ", err)
+			lib.Config().GetLogger().Error("unable to get measuring functions for aspect", "error", err)
 			http.Error(writer, err.Error(), code)
 			return
 		}
@@ -202,12 +202,12 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		// Get from Permsearch (import-types)
 		node, err := lib.GetAspectNodes([]string{id}, token)
 		if err != nil {
-			log.Println("ERROR: ", err)
+			lib.Config().GetLogger().Error("unable to get aspect-nodes", "error", err)
 			http.Error(writer, err.Error(), http.StatusBadGateway)
 			return
 		}
 		if len(node) != 1 {
-			log.Println("ERROR: ", err)
+			lib.Config().GetLogger().Error("unexpected length of reponse", "length", len(node))
 			http.Error(writer, "unexpected length of reponse", http.StatusBadGateway)
 			return
 		}
@@ -215,7 +215,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 
 		importTypes, err, code := lib.GetImportTypesWithAspect(token, ids)
 		if err != nil {
-			log.Println("ERROR: ", err)
+			lib.Config().GetLogger().Error("unable to get import-types", "error", err)
 			http.Error(writer, err.Error(), code)
 			return
 		}
@@ -230,7 +230,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		}
 		additionalFunctions, err, code := lib.GetMeasuringFunctions(token, additionalFunctionIds)
 		if err != nil {
-			log.Println("ERROR: ", err)
+			lib.Config().GetLogger().Error("unable to get measuring functions", "error", err)
 			http.Error(writer, err.Error(), code)
 			return
 		}
@@ -284,7 +284,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		if len(additionalAspectIds) > 0 {
 			importTypeNodes, err := lib.GetAspectNodes(additionalAspectIds, token)
 			if err != nil {
-				log.Println("ERROR: ", err)
+				lib.Config().GetLogger().Error("unable to get aspect-nodes", "error", err)
 				http.Error(writer, err.Error(), http.StatusBadGateway)
 				return
 			}
@@ -305,7 +305,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 			if len(additionalAspectIds) > 0 {
 				additionalNodes, err := lib.GetAspectNodes(additionalAspectIds, token)
 				if err != nil {
-					log.Println("ERROR: ", err)
+					lib.Config().GetLogger().Error("unable to get aspect-nodes", "error", err)
 					http.Error(writer, err.Error(), http.StatusBadGateway)
 					return
 				}
@@ -316,7 +316,7 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		err = json.NewEncoder(writer).Encode(result)
 		if err != nil {
-			log.Println("ERROR: unable to encode response", err)
+			lib.Config().GetLogger().Error("unable to encode response", "error", err)
 		}
 		return
 	})

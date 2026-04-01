@@ -19,10 +19,10 @@ package pkg
 import (
 	"encoding/json"
 	"errors"
+
 	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
 	"github.com/SENERGY-Platform/device-repository/lib/client"
 	"github.com/SENERGY-Platform/models/go/models"
-	"log"
 )
 
 func (this *Lib) CompleteGatewayHistory(token auth.Token, duration string, gateways []map[string]interface{}) (result []map[string]interface{}, err error) {
@@ -44,12 +44,12 @@ func (this *Lib) CompleteGatewayHistory(token auth.Token, duration string, gatew
 	}
 	logHistory, err := this.GetGatewayLogHistory(token, ids, duration)
 	if err != nil {
-		log.Println("ERROR legacyHubTransformations.GetGatewayLogHistory()", err)
+		this.Config().GetLogger().Error("ERROR CompleteGatewayHistory::GetGatewayLogHistory()", "error", err)
 		return result, err
 	}
 	logEdges, err := this.GetLogedges(token, "gateway", ids, duration)
 	if err != nil {
-		log.Println("ERROR legacyDeviceTransformations.GetLogedges()", err)
+		this.Config().GetLogger().Error("ERROR CompleteGatewayHistory::GetLogedges()", "error", err)
 		return result, err
 	}
 	for _, id := range ids {

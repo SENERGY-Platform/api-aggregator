@@ -20,18 +20,19 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
-	"github.com/SENERGY-Platform/api-aggregator/pkg/model"
-	"github.com/SENERGY-Platform/device-repository/lib/client"
-	importRepo "github.com/SENERGY-Platform/import-repository/lib/client"
 	"io"
 	"net/http"
 	"net/url"
 	"runtime/debug"
+
+	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
+	"github.com/SENERGY-Platform/api-aggregator/pkg/model"
+	"github.com/SENERGY-Platform/device-repository/lib/client"
+	importRepo "github.com/SENERGY-Platform/import-repository/lib/client"
 )
 
 type Interface interface {
-	Config() Config
+	Config() *Config
 	ListGateways(token auth.Token, limit int64, offset int64) (result []map[string]interface{}, err error)
 	GetExtendedProcessList(token auth.Token, query url.Values) (result []map[string]interface{}, err error)
 	CompleteDeviceHistory(token auth.Token, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error)
@@ -53,8 +54,8 @@ type Lib struct {
 	importRepo importRepo.Interface
 }
 
-func (this *Lib) Config() Config {
-	return this.config
+func (this *Lib) Config() *Config {
+	return &this.config
 }
 
 func New(config Config) *Lib {
