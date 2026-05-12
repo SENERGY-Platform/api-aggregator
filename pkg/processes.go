@@ -74,6 +74,14 @@ func (this *Lib) GetExtendedProcessList(token auth.Token, query url.Values) (res
 }
 
 func (this *Lib) GetProcessDeploymentList(token auth.Token, query url.Values) (result []map[string]interface{}, err error) {
+	if query.Has("id") {
+		deployment, err := this.getSingleDeployment(token, query.Get("id"))
+		if err != nil {
+			return result, err
+		}
+		return []map[string]interface{}{deployment}, nil
+	}
+
 	if this.Config().CamundaWrapperUrl == "" || this.Config().CamundaWrapperUrl == "-" {
 		this.Config().GetLogger().Warn("no CamundaWrapperUrl url configured")
 		return
@@ -101,6 +109,51 @@ func (this *Lib) GetProcessDeploymentList(token auth.Token, query url.Values) (r
 	if err != nil {
 		debug.PrintStack()
 	}
+	return result, err
+}
+
+func (this *Lib) getSingleDeployment(token auth.Token, id string) (result map[string]interface{}, err error) {
+	if this.Config().ProcessDeploymentUrl == "" || this.Config().ProcessDeploymentUrl == "-" {
+		this.Config().GetLogger().Warn("no ProcessDeploymentUrl url configured")
+		return
+	}
+	req, err := http.NewRequest("GET", this.config.ProcessDeploymentUrl+"/v3/deployments/"+id+"?with_options=false", nil)
+	if err != nil {
+		debug.PrintStack()
+		return nil, err
+	}
+	req.Header.Set("Authorization", token.Token)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		this.Config().GetLogger().Error("ERROR: GetProcessDeploymentList()::http.DefaultClient.Do(req)", "error", err)
+		debug.PrintStack()
+		return result, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		responseMsg, _ := io.ReadAll(resp.Body)
+		this.Config().GetLogger().Error("ERROR: GetProcessDeploymentList()::unexpected response", "status-code", resp.StatusCode, "error", string(responseMsg))
+		debug.PrintStack()
+		return result, errors.New("unexpected response")
+	}
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		debug.PrintStack()
+		return result, err
+	}
+	diagram, ok := result["diagram"]
+	if !ok {
+		return result, nil
+	}
+	diagramMap, ok := diagram.(map[string]interface{})
+	if !ok {
+		return result, nil
+	}
+	svg, ok := diagramMap["svg"]
+	if !ok {
+		return result, nil
+	}
+	result["diagram"] = svg
 	return result, err
 }
 

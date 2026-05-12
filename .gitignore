@@ -1,3 +1,5 @@
 .idea
 api-aggregator
 coverage.out
+.vscode
+__debug*
