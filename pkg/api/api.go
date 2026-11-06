@@ -63,7 +63,6 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 	router.GET("/devices", func(res http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		limit := r.URL.Query().Get("limit")
 		offset := r.URL.Query().Get("offset")
-		logDuration := r.URL.Query().Get("log")
 
 		limit, offset = limitOffsetDefault(limit, offset)
 
@@ -93,15 +92,6 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if logDuration != "" {
-			result, err = lib.CompleteDeviceHistory(token, logDuration, result)
-		}
-
-		if err != nil {
-			lib.Config().GetLogger().Error("unable to complete device history", "error", err)
-			http.Error(res, err.Error(), http.StatusInternalServerError)
-			return
-		}
 		res.Header().Set("Content-Type", "application/json; charset=utf-8")
 		json.NewEncoder(res).Encode(result)
 	})
@@ -111,12 +101,10 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 			optional:
 				limit 	{int} 		may default to 100
 				offset 	{int}		may default to 0
-				log		{string}	influxdb duration (for example 4h) https://docs.influxdata.com/influxdb/v1.7/query_language/spec/#durations
 	*/
 	router.GET("/hubs", func(res http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		limit := r.URL.Query().Get("limit")
 		offset := r.URL.Query().Get("offset")
-		logDuration := r.URL.Query().Get("log")
 
 		limit, offset = limitOffsetDefault(limit, offset)
 
@@ -148,16 +136,6 @@ func getRoutes(lib pkg.Interface) (router *httprouter.Router) {
 		}
 		if err != nil {
 			lib.Config().GetLogger().Error("unable to list gateways", "error", err)
-			http.Error(res, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if logDuration != "" {
-			result, err = lib.CompleteGatewayHistory(token, logDuration, result)
-		}
-
-		if err != nil {
-			lib.Config().GetLogger().Error("unable to complete gateway history", "error", err)
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}

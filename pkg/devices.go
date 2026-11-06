@@ -18,7 +18,6 @@ package pkg
 
 import (
 	"encoding/json"
-	"errors"
 
 	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
 	"github.com/SENERGY-Platform/device-repository/lib/client"
@@ -62,42 +61,6 @@ func (this *Lib) legacyDeviceTransformations(token auth.Token, devices []models.
 		}
 		element["creator"] = device.OwnerId
 		result = append(result, element)
-	}
-	return
-}
-
-func (this *Lib) CompleteDeviceHistory(token auth.Token, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error) {
-	ids := []string{}
-	deviceMap := map[string]map[string]interface{}{}
-	for _, device := range devices {
-		id, ok := device["id"]
-		if !ok {
-			err = errors.New("unable to get device id")
-			return
-		}
-		idStr, ok := id.(string)
-		if !ok {
-			err = errors.New("unable to cast device id to string")
-			return
-		}
-		ids = append(ids, idStr)
-		deviceMap[idStr] = device
-	}
-	logHistory, err := this.GetDeviceLogHistory(token, ids, duration)
-	if err != nil {
-		this.Config().GetLogger().Error("ERROR legacyDeviceTransformations.GetDeviceLogHistory()", "error", err)
-		return result, err
-	}
-	logEdges, err := this.GetLogedges(token, "device", ids, duration)
-	if err != nil {
-		this.Config().GetLogger().Error("ERROR legacyDeviceTransformations.GetLogedges()", "error", err)
-		return result, err
-	}
-	for _, id := range ids {
-		device := deviceMap[id]
-		device["log_history"] = logHistory[id]
-		device["log_edge"] = logEdges[id]
-		result = append(result, device)
 	}
 	return
 }

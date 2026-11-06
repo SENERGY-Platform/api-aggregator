@@ -18,48 +18,11 @@ package pkg
 
 import (
 	"encoding/json"
-	"errors"
 
 	"github.com/SENERGY-Platform/api-aggregator/pkg/auth"
 	"github.com/SENERGY-Platform/device-repository/lib/client"
 	"github.com/SENERGY-Platform/models/go/models"
 )
-
-func (this *Lib) CompleteGatewayHistory(token auth.Token, duration string, gateways []map[string]interface{}) (result []map[string]interface{}, err error) {
-	ids := []string{}
-	gatewayMap := map[string]map[string]interface{}{}
-	for _, gateway := range gateways {
-		id, ok := gateway["id"]
-		if !ok {
-			err = errors.New("unable to get gateway id")
-			return
-		}
-		idStr, ok := id.(string)
-		if !ok {
-			err = errors.New("unable to cast gateway id to string")
-			return
-		}
-		ids = append(ids, idStr)
-		gatewayMap[idStr] = gateway
-	}
-	logHistory, err := this.GetGatewayLogHistory(token, ids, duration)
-	if err != nil {
-		this.Config().GetLogger().Error("ERROR CompleteGatewayHistory::GetGatewayLogHistory()", "error", err)
-		return result, err
-	}
-	logEdges, err := this.GetLogedges(token, "gateway", ids, duration)
-	if err != nil {
-		this.Config().GetLogger().Error("ERROR CompleteGatewayHistory::GetLogedges()", "error", err)
-		return result, err
-	}
-	for _, id := range ids {
-		gateway := gatewayMap[id]
-		gateway["log_history"] = logHistory[id]
-		gateway["log_edge"] = logEdges[id]
-		result = append(result, gateway)
-	}
-	return
-}
 
 func (this *Lib) ListGateways(token auth.Token, limit int64, offset int64) (result []map[string]interface{}, err error) {
 	hubs, _, err, _ := this.deviceRepo.ListExtendedHubs(token.Jwt(), client.HubListOptions{

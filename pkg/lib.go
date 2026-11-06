@@ -35,8 +35,6 @@ type Interface interface {
 	Config() *Config
 	ListGateways(token auth.Token, limit int64, offset int64) (result []map[string]interface{}, err error)
 	GetExtendedProcessList(token auth.Token, query url.Values) (result []map[string]interface{}, err error)
-	CompleteDeviceHistory(token auth.Token, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error)
-	CompleteGatewayHistory(token auth.Token, duration string, devices []map[string]interface{}) (result []map[string]interface{}, err error)
 	ListAllGateways(token auth.Token) (result []map[string]interface{}, err error)
 	FindDevices(token auth.Token, limit int, offset int) ([]map[string]interface{}, error)
 	GetMeasuringFunctionsForAspect(token auth.Token, aspectId string) (functions []Function, err error, code int)
